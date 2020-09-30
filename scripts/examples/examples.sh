@@ -51,3 +51,5 @@ python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]
 
 # using Australian_Wrs_list.txt
 #python3 ard_scene_select.py  --usgs-level1-files data/All_Landsat_Level1_Nci_Files.txt  --workdir scratch/ --allowed-codes data/Australian_Wrs_list.txt
+
+#python3 ../../scene_select/ard_scene_select.py  --products '["2020-08-09:2020-08-30", "2020-09-02:2020-09-05"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging

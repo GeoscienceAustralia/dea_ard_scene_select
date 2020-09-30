@@ -199,7 +199,7 @@ def calc_processed_ard_scene_ids(dc, product):
         # This uses the l1 product to ard mapping to filter out
         # updated l1 scenes that have been processed using the old l1 scene.
         processed_ard_scene_ids = None
-        LOGGER.warning("THE ARD ODC product name after ARD processing for %s is not known.", product)
+        LOGGER.warning("THE ARD ODC product name after ARD processing is not known.", product=product)
     return processed_ard_scene_ids
 
 
@@ -248,6 +248,11 @@ def l1_filter(
         # since the ancillary files are not there
         ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
         if ancill_there is False:
+            #interim_days_wait = 30
+            #days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=interim_days_wait)
+            #if days_ago < dataset.time.end:
+            # If the ancillary files take too long to turn up
+            # process anyway
             kwargs = {
                 DATASETPATH: file_path,
                 SCENEID: dataset.metadata.landsat_scene_id,
