@@ -9,6 +9,9 @@ module load dea
 
 SSPATH=$PWD/../../
 
+# You'll need a scratch directory
+# mkdir scratch
+
 # so it uses the dev scene select
 # echo $PYTHONPATH
 [[ ":$PYTHONPATH:" != *":$SSPATH:"* ]] && PYTHONPATH="$SSPATH:${PYTHONPATH}"
@@ -19,7 +22,7 @@ SSPATH=$PWD/../../
 
 #  local code local work dir, all products
 # slow
-python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
+#python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
 
 # This will use the dev ard scene select too..., all products
 # unless the PYTHONPATH line above is commented out
@@ -28,7 +31,7 @@ python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scr
 
 #  local code local work dir ls5t
 # use ODC, fast for OEC
-#python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
+python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
 
 #  local code local work dir ls8c
 # use ODC, fast for OEC#

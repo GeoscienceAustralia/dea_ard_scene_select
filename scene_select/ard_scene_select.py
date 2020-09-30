@@ -26,6 +26,7 @@ from scene_select.dass_logs import LOGGER, LogMainFunction
 LANDSAT_AOI_FILE = "Australian_Wrs_list.txt"
 DATA_DIR = Path(__file__).parent.joinpath("data")
 ODC_FILTERED_FILE = "scenes_to_ARD_process.txt"
+ARCHIVE_FILE = "uuid_to_archive.txt"
 PRODUCTS = '["ga_ls5t_level1_3", "ga_ls7e_level1_3", \
                     "usgs_ls5t_level1_1", "usgs_ls7e_level1_1", "usgs_ls8c_level1_1"]'
 FMT2 = "filter-jobid-{jobid}"
@@ -38,6 +39,7 @@ GEN_LOG_FILE = "ard_scene_select.log"
 SCENEREMOVED = "scene removed"
 SCENEADDED = "scene added"
 SUMMARY = "summary"
+MANYSCENES = "Multiple identical ARD scene ids"
 
 # LOGGER keys
 DATASETPATH = "dataset_path"
@@ -148,50 +150,6 @@ def allowed_codes_to_region_codes(allowed_codes: Path) -> List:
     return path_row_list
 
 
-def process_scene(dataset, ancillary_ob, days_delta):
-    if not dataset.local_path:
-        kwargs = {
-            DATASETID: str(dataset.id),
-            REASON: "Skipping dataset without local paths",
-            MSG: ("Bad scene format"),
-        }
-        LOGGER.warning(SCENEREMOVED, **kwargs)
-        return False
-
-    assert dataset.local_path.name.endswith("metadata.yaml")
-
-    days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=days_delta)
-    # Continue here if a maturity level of final cannot be procduced
-    # since the ancillary files are not there
-    ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
-    if ancill_there is False:
-        file_path = (
-            dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix()
-        )
-        kwargs = {
-            DATASETPATH: file_path,
-            SCENEID: dataset.metadata.landsat_scene_id,
-            REASON: "ancillary files not ready",
-            MSG: ("Not ready: %s" % msg),
-        }
-        LOGGER.info(SCENEREMOVED, **kwargs)
-        return False
-
-    if days_ago < dataset.time.end:
-        file_path = (
-            dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix()
-        )
-        kwargs = {
-            DATASETPATH: file_path,
-            REASON: "Not processing recent data",
-            MSG: ("Not processing data after time delta(days:%d, Date %s)" % days_delta, days_ago.strftime("%Y-%m-%d")),
-        }
-        LOGGER.info(SCENEREMOVED, **kwargs)
-        return False
-
-    return True
-
-
 def dataset_with_child(dc, dataset):
     """
     If any child exists that isn't archived
@@ -222,9 +180,17 @@ def calc_processed_ard_scene_ids(dc, product):
     if product in ARD_PARENT_PRODUCT_MAPPING:
         processed_ard_scene_ids = {}
         for result in dc.index.datasets.search_returning(
-            ("landsat_scene_id", "dataset_maturity"), product=ARD_PARENT_PRODUCT_MAPPING[product]
+            ("landsat_scene_id", "dataset_maturity", "id"), product=ARD_PARENT_PRODUCT_MAPPING[product]
         ):
-            processed_ard_scene_ids[chopped_scene_id(result.landsat_scene_id)] = result.dataset_maturity
+            choppped_id = chopped_scene_id(result.landsat_scene_id)
+            if choppped_id in processed_ard_scene_ids:
+                old_uuid = processed_ard_scene_ids[choppped_id]["id"]
+                LOGGER.warning(MANYSCENES, SCENEID=result.landsat_scene_id, old_uuid=old_uuid, new_uuid=result.id)
+
+            processed_ard_scene_ids[chopped_scene_id(result.landsat_scene_id)] = {
+                "dataset_maturity": result.dataset_maturity,
+                "id": result.id,
+            }
     else:
         # scene select has its own mapping for l1 product to ard product
         # (ARD_PARENT_PRODUCT_MAPPING).
@@ -237,16 +203,59 @@ def calc_processed_ard_scene_ids(dc, product):
     return processed_ard_scene_ids
 
 
-def l1_filter(dc, product, brdfdir: Path, wvdir: Path, region_codes: List, scene_limit: int, days_delta=0):
+def l1_filter(
+    dc, product, brdfdir: Path, wvdir: Path, region_codes: List,
+):
     """return a list of file paths to ARD process """
     processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
-
     ancillary_ob = AncillaryFiles(brdf_dir=brdfdir, water_vapour_dir=wvdir)
     files2process = []
+    uuids2archive = []
     for dataset in dc.index.datasets.search(product=product):
         file_path = (
             dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix()
         )
+
+        # Filter out if the processing level is too low
+        if not re.match(PROCESSING_PATTERN_MAPPING[product], dataset.metadata.landsat_product_id):
+
+            kwargs = {REASON: "Processing level too low, new ", SCENEID: dataset.metadata.landsat_scene_id}
+            LOGGER.debug(SCENEREMOVED, **kwargs)
+            continue
+
+        # Filter out if outside area of interest
+        if dataset.metadata.region_code not in region_codes:
+            kwargs = {
+                SCENEID: dataset.metadata.landsat_scene_id,
+                REASON: "Region not in AOI",
+                MSG: ("Path row %s" % dataset.metadata.region_code),
+            }
+            LOGGER.debug(SCENEREMOVED, **kwargs)
+            continue
+
+        if not dataset.local_path:
+            kwargs = {
+                DATASETID: str(dataset.id),
+                REASON: "Skipping dataset without local paths",
+                MSG: ("Bad scene format"),
+            }
+            LOGGER.warning(SCENEREMOVED, **kwargs)
+            continue
+
+        assert dataset.local_path.name.endswith("metadata.yaml")
+
+        # Continue here if a maturity level of final cannot be procduced
+        # since the ancillary files are not there
+        ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
+        if ancill_there is False:
+            kwargs = {
+                DATASETPATH: file_path,
+                SCENEID: dataset.metadata.landsat_scene_id,
+                REASON: "ancillary files not ready",
+                MSG: ("Not ready: %s" % msg),
+            }
+            LOGGER.info(SCENEREMOVED, **kwargs)
+            continue
 
         if processed_ard_scene_ids:
             a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
@@ -257,28 +266,18 @@ def l1_filter(dc, product, brdfdir: Path, wvdir: Path, region_codes: List, scene
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
                 LOGGER.debug(SCENEREMOVED, **kwargs)
+                produced_ard = processed_ard_scene_ids[a_chopped_scene_id]
+                if produced_ard["dataset_maturity"] == "interim" and ancill_there is True:
+                    # lets build a list of ARD uuid's to delete
+                    uuids2archive.append(str(produced_ard["id"]))
 
-                # if processed_ard_scene_id[a_chopped_scene_id] == 'interim':
-                # lets build a list of uuid's to delete
-                # str(dataset.id)
+                    # Let's reprocess this file to final
+                    # skipping the 'any child exists that isn't archived'
+                    # filter
+                    files2process.append(file_path)
                 continue
 
-        if not re.match(PROCESSING_PATTERN_MAPPING[product], dataset.metadata.landsat_product_id):
-            kwargs = {REASON: "Processing level too low, new ", SCENEID: dataset.metadata.landsat_scene_id}
-            LOGGER.debug(SCENEREMOVED, **kwargs)
-            continue
-
-        if dataset.metadata.region_code not in region_codes:
-            kwargs = {
-                SCENEID: dataset.metadata.landsat_scene_id,
-                REASON: "Region not in AOI",
-                MSG: ("Path row %s" % dataset.metadata.region_code),
-            }
-            LOGGER.debug(SCENEREMOVED, **kwargs)
-            continue
-
-        if process_scene(dataset, ancillary_ob, days_delta) is False:
-            continue
+        # WARNING any filter under here will not be executed when processing interim scenes
 
         # If any child exists that isn't archived
         if dataset_with_child(dc, dataset):
@@ -292,7 +291,7 @@ def l1_filter(dc, product, brdfdir: Path, wvdir: Path, region_codes: List, scene
 
         files2process.append(file_path)
 
-    return files2process
+    return files2process, uuids2archive
 
 
 def l1_scenes_to_process(
@@ -303,21 +302,14 @@ def l1_scenes_to_process(
     region_codes: List,
     scene_limit: int,
     config: Optional[Path] = None,
-    days_delta: int = 21,
 ) -> int:
     """Writes all the files returned from datacube for level1 to a text file."""
     dc = datacube.Datacube(app="gen-list", config=config)
     l1_count = 0
     with open(outfile, "w") as fid:
         for product in products:
-            files2process = l1_filter(
-                dc,
-                product,
-                brdfdir=brdfdir,
-                wvdir=wvdir,
-                region_codes=region_codes,
-                scene_limit=scene_limit,
-                days_delta=days_delta,
+            files2process, uuids2archive = l1_filter(
+                dc, product, brdfdir=brdfdir, wvdir=wvdir, region_codes=region_codes,
             )
             for fp in files2process:
                 fid.write(fp + "\n")
@@ -326,7 +318,7 @@ def l1_scenes_to_process(
                     break
             if l1_count >= scene_limit:
                 break
-    return l1_count
+    return l1_count, uuids2archive
 
 
 def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
@@ -414,7 +406,6 @@ def make_ard_pbs(level1_list, **ard_click_params):
     help="Full path to a datacube config text file. This describes the ODC database.",
     default=None,
 )
-@click.option("--days_delta", type=int, help="Only process files older than days delta.", default=0)
 @click.option(
     "--products",
     cls=PythonLiteralOption,
@@ -481,7 +472,6 @@ def scene_select(
     usgs_level1_files: click.Path,
     allowed_codes: click.Path,
     config: click.Path,
-    days_delta: int,
     products: list,
     logdir: click.Path,
     brdfdir: click.Path,
@@ -530,7 +520,7 @@ def scene_select(
 
     if not usgs_level1_files:
         usgs_level1_files = jobdir.joinpath(ODC_FILTERED_FILE)
-        l1_count = l1_scenes_to_process(
+        l1_count, uuids2archive = l1_scenes_to_process(
             usgs_level1_files,
             products=products,
             brdfdir=Path(brdfdir).resolve(),
@@ -538,8 +528,12 @@ def scene_select(
             region_codes=allowed_codes_to_region_codes(allowed_codes),
             config=config,
             scene_limit=scene_limit,
-            days_delta=days_delta,
         )
+        # ARCHIVE_FILE
+        path_scenes_to_archive = jobdir.joinpath(ARCHIVE_FILE)
+        with open(path_scenes_to_archive, "w") as fid:
+            for item in uuids2archive:
+                fid.write("%s\n" % item)
 
     _calc_node_with_defaults(ard_click_params, l1_count)
 
