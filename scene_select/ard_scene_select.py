@@ -248,6 +248,11 @@ def l1_filter(
         # since the ancillary files are not there
         ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
         if ancill_there is False:
+            #interim_days_wait = 30
+            #days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=interim_days_wait)
+            #if days_ago < dataset.time.end:
+            # If the ancillary files take too long to turn up
+            # process anyway
             kwargs = {
                 DATASETPATH: file_path,
                 SCENEID: dataset.metadata.landsat_scene_id,
