@@ -10,7 +10,6 @@ from functools import lru_cache
 import h5py
 import numpy
 import pandas
-import pytz
 
 
 LOG = structlog.get_logger()
@@ -37,8 +36,7 @@ def read_h5_table(fid, dataset_name):
     """
 
     dset = fid[dataset_name]
-    idx_names = None
-
+    
     # grab the index names if we have them
     idx_names = dset.attrs.get("index_names")
 
