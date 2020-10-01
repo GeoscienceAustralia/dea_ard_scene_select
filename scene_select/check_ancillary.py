@@ -36,7 +36,7 @@ def read_h5_table(fid, dataset_name):
     """
 
     dset = fid[dataset_name]
-    
+
     # grab the index names if we have them
     idx_names = dset.attrs.get("index_names")
 
