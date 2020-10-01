@@ -12,6 +12,8 @@ from datetime import datetime, timedelta
 import click
 from logging.config import fileConfig
 
+import pytz
+
 try:
     import datacube
 except (ImportError, AttributeError) as error:
@@ -200,8 +202,24 @@ def calc_processed_ard_scene_ids(dc, product):
     return processed_ard_scene_ids
 
 
+def exclude_days(days_to_exclude: List, checkdatetime):
+    """
+    days_to_exclude format example; '["2020-08-09:2020-08-30", "2020-09-02:2020-09-05"]'
+    """
+    for period in days_to_exclude:
+        start, end = period.split(":")
+        start = datetime.strptime(start, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+        end = datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+
+        # let's make it the end of the day
+        end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
+        if checkdatetime >= start and checkdatetime <= end:
+            return True
+    return False
+
+
 def l1_filter(
-    dc, product, brdfdir: Path, wvdir: Path, region_codes: List,
+    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int,
 ):
     """return a list of file paths to ARD process """
     processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
@@ -259,6 +277,11 @@ def l1_filter(
             LOGGER.info(SCENEREMOVED, **kwargs)
             continue
 
+        # FIXME removed the hard-coded list
+        days_to_exclude = ["2020-08-09:2020-09-02"]
+        if exclude_days(days_to_exclude, dataset.time.end):
+            continue
+
         if processed_ard_scene_ids:
             a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
             if a_chopped_scene_id in processed_ard_scene_ids:
@@ -303,6 +326,7 @@ def l1_scenes_to_process(
     wvdir: Path,
     region_codes: List,
     scene_limit: int,
+    interim_days_wait: int,
     config: Optional[Path] = None,
 ) -> Tuple[int, List[str]]:
     """Writes all the files returned from datacube for level1 to a text file."""
@@ -312,6 +336,7 @@ def l1_scenes_to_process(
         for product in products:
             files2process, uuids2archive = l1_filter(
                 dc, product, brdfdir=brdfdir, wvdir=wvdir, region_codes=region_codes,
+                interim_days_wait=interim_days_wait,
             )
             for fp in files2process:
                 fid.write(fp + "\n")
@@ -440,6 +465,12 @@ def make_ard_pbs(level1_list, **ard_click_params):
     type=int,
     help="Maximum number of scenes to process in a run.  This is a safety limit.",
 )
+@click.option(
+    "--interim_days_wait",
+    default=300,
+    type=int,
+    help="Maximum number of days to wait for ancillary data before processing ARD to an interim maturity level.",
+)
 @click.option("--run-ard", default=False, is_flag=True, help="Execute the ard_pbs script.")
 # These are passed on to ard processing
 @click.option("--test", default=False, is_flag=True, help="Test job execution (Don't submit the job to the PBS queue).")
@@ -481,6 +512,7 @@ def scene_select(
     stop_logging: bool,
     log_config: click.Path,
     scene_limit: int,
+    interim_days_wait: int,
     run_ard: bool,
     **ard_click_params: dict,
 ):
@@ -530,6 +562,7 @@ def scene_select(
             region_codes=allowed_codes_to_region_codes(allowed_codes),
             config=config,
             scene_limit=scene_limit,
+            interim_days_wait=interim_days_wait,
         )
         # ARCHIVE_FILE
         path_scenes_to_archive = jobdir.joinpath(ARCHIVE_FILE)
