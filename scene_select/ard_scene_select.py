@@ -1,14 +1,11 @@
 #!/usr/bin/env python3
 
 import os
-import sys
 import stat
 import math
-import logging
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Tuple, Optional
 import re
-import concurrent.futures
 import uuid
 import subprocess
 from datetime import datetime, timedelta
@@ -237,7 +234,7 @@ def l1_filter(
             kwargs = {
                 DATASETID: str(dataset.id),
                 REASON: "Skipping dataset without local paths",
-                MSG: ("Bad scene format"),
+                MSG: "Bad scene format",
             }
             LOGGER.warning(SCENEREMOVED, **kwargs)
             continue
@@ -307,7 +304,7 @@ def l1_scenes_to_process(
     region_codes: List,
     scene_limit: int,
     config: Optional[Path] = None,
-) -> int:
+) -> Tuple[int, List[str]]:
     """Writes all the files returned from datacube for level1 to a text file."""
     dc = datacube.Datacube(app="gen-list", config=config)
     l1_count = 0
@@ -539,6 +536,11 @@ def scene_select(
         with open(path_scenes_to_archive, "w") as fid:
             for item in uuids2archive:
                 fid.write("%s\n" % item)
+    else:
+        with open(usgs_level1_files) as f:
+            for i, l in enumerate(f):
+                pass
+            l1_count = i + 1
 
     _calc_node_with_defaults(ard_click_params, l1_count)
 
