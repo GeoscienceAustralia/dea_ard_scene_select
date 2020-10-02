@@ -8,7 +8,7 @@ from typing import List, Tuple, Optional
 import re
 import uuid
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime
 import click
 from logging.config import fileConfig
 
@@ -42,6 +42,7 @@ MANYSCENES = "Multiple identical ARD scene ids"
 
 # LOGGER keys
 DATASETPATH = "dataset_path"
+DATASETTIMEEND = "dataset_time_end"
 REASON = "reason"
 MSG = "message"
 DATASETID = "dataset_id"
@@ -136,6 +137,8 @@ class PythonLiteralOption(click.Option):
             assert value.count("[") == 1 and value.count("]") == 1
             list_as_str = value.replace('"', "'").split("[")[1].split("]")[0]
             list_of_items = [item.strip().strip("'") for item in list_as_str.split(",")]
+            if list_of_items == [""]:
+                list_of_items = []
             return list_of_items
         except Exception:
             raise click.BadParameter(value)
@@ -208,20 +211,25 @@ def exclude_days(days_to_exclude: List, checkdatetime):
     """
     for period in days_to_exclude:
         start, end = period.split(":")
-        start = datetime.strptime(start, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
-        end = datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=pytz.UTC)
+        # datetime.timezone.utc
+        # pytz.UTC
+        start = datetime.strptime(start, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
+        end = datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
 
         # let's make it the end of the day
         end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
-        if checkdatetime >= start and checkdatetime <= end:
+        if start <= checkdatetime <= end:
             return True
     return False
 
 
 def l1_filter(
-    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int,
+    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int, days_to_exclude: List,
 ):
     """return a list of file paths to ARD process """
+    # pylint: disable=R0914
+    # R0914: Too many local variables
+
     processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
     ancillary_ob = AncillaryFiles(brdf_dir=brdfdir, water_vapour_dir=wvdir)
     files2process = []
@@ -263,9 +271,8 @@ def l1_filter(
         # since the ancillary files are not there
         ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
         if ancill_there is False:
-            #interim_days_wait = 30
-            #days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=interim_days_wait)
-            #if days_ago < dataset.time.end:
+            # days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=interim_days_wait)
+            # if days_ago < dataset.time.end:
             # If the ancillary files take too long to turn up
             # process anyway
             kwargs = {
@@ -277,9 +284,14 @@ def l1_filter(
             LOGGER.info(SCENEREMOVED, **kwargs)
             continue
 
-        # FIXME removed the hard-coded list
-        days_to_exclude = ["2020-08-09:2020-09-02"]
+        # FIXME remove the hard-coded list
         if exclude_days(days_to_exclude, dataset.time.end):
+            kwargs = {
+                DATASETTIMEEND: dataset.time.end,
+                SCENEID: dataset.metadata.landsat_scene_id,
+                REASON: "This day is excluded.",
+            }
+            LOGGER.info(SCENEREMOVED, **kwargs)
             continue
 
         if processed_ard_scene_ids:
@@ -327,6 +339,7 @@ def l1_scenes_to_process(
     region_codes: List,
     scene_limit: int,
     interim_days_wait: int,
+    days_to_exclude: List,
     config: Optional[Path] = None,
 ) -> Tuple[int, List[str]]:
     """Writes all the files returned from datacube for level1 to a text file."""
@@ -335,8 +348,13 @@ def l1_scenes_to_process(
     with open(outfile, "w") as fid:
         for product in products:
             files2process, uuids2archive = l1_filter(
-                dc, product, brdfdir=brdfdir, wvdir=wvdir, region_codes=region_codes,
+                dc,
+                product,
+                brdfdir=brdfdir,
+                wvdir=wvdir,
+                region_codes=region_codes,
                 interim_days_wait=interim_days_wait,
+                days_to_exclude=days_to_exclude,
             )
             for fp in files2process:
                 fid.write(fp + "\n")
@@ -466,10 +484,18 @@ def make_ard_pbs(level1_list, **ard_click_params):
     help="Maximum number of scenes to process in a run.  This is a safety limit.",
 )
 @click.option(
-    "--interim_days_wait",
+    "--interim-days-wait",
     default=300,
     type=int,
     help="Maximum number of days to wait for ancillary data before processing ARD to an interim maturity level.",
+)
+@click.option(
+    "--days-to-exclude",
+    cls=PythonLiteralOption,
+    type=list,
+    help='List of ranges of dates to not process, as (start date: end date) with format (yyyy-mm-dd:yyyy-mm-dd). e.g. \
+    \'["2019-12-22:2019-12-25", "2020-08-09:2020-09-03"]\'',
+    default=[],
 )
 @click.option("--run-ard", default=False, is_flag=True, help="Execute the ard_pbs script.")
 # These are passed on to ard processing
@@ -513,6 +539,7 @@ def scene_select(
     log_config: click.Path,
     scene_limit: int,
     interim_days_wait: int,
+    days_to_exclude: list,
     run_ard: bool,
     **ard_click_params: dict,
 ):
@@ -563,6 +590,7 @@ def scene_select(
             config=config,
             scene_limit=scene_limit,
             interim_days_wait=interim_days_wait,
+            days_to_exclude=days_to_exclude,
         )
         # ARCHIVE_FILE
         path_scenes_to_archive = jobdir.joinpath(ARCHIVE_FILE)
@@ -571,6 +599,7 @@ def scene_select(
                 fid.write("%s\n" % item)
     else:
         with open(usgs_level1_files) as f:
+            i = 0
             for i, l in enumerate(f):
                 pass
             l1_count = i + 1
