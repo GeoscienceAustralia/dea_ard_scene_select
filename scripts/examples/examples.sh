@@ -27,11 +27,11 @@ SSPATH=$PWD/../../
 # This will use the dev ard scene select too..., all products
 # unless the PYTHONPATH line above is commented out
 # slow
-#time ard-scene-select  --days-to-exclude '["2020-08-09:2020-09-03"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00
+time ard-scene-select  --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 02:30:00 --scene-limit 999999   --days-to-exclude '["2020-08-09:2020-09-03"]'
 
 #  local code local work dir ls5t
 # use ODC, fast for OEC
-time python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --days-to-exclude '["2020-08-09:2020-09-03"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
+#time python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --days-to-exclude '["2020-08-09:2020-09-03"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
 #time python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
 
 #  local code local work dir ls8c
