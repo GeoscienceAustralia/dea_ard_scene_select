@@ -607,6 +607,8 @@ def scene_select(
     _calc_node_with_defaults(ard_click_params, l1_count)
 
     # write pbs script
+    if len(uuids2archive) > 0:
+        ard_click_params["archive-list"] = path_scenes_to_archive
     run_ard_pathfile = jobdir.joinpath("run_ard_pbs.sh")
     with open(run_ard_pathfile, "w") as src:
         src.write(make_ard_pbs(usgs_level1_files, **ard_click_params))
