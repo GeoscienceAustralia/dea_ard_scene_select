@@ -88,7 +88,7 @@ then
 
     echo
     echo "Installing ard-scene-select"
-    #installrepo ard-scene-select   pbs         https://github.com/GeoscienceAustralia/dea-ard-scene-select.git
+    #installrepo ard-scene-select   archive         https://github.com/GeoscienceAustralia/dea-ard-scene-select.git
     installrepo ard-scene-select   develop         https://github.com/GeoscienceAustralia/dea-ard-scene-select.git
     #installrepo ard-scene-select   master          https://github.com/GeoscienceAustralia/dea-ard-scene-select.git
     #installrepo wagl              develop          https://github.com/GeoscienceAustralia/wagl.git
