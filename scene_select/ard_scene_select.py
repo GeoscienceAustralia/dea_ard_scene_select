@@ -273,12 +273,12 @@ def l1_filter(
         if ancill_there is False:
             days_ago = datetime.datetime.now(dataset.time.end.tzinfo) - datetime.timedelta(days=interim_days_wait)
             kwargs = {
-                'days_ago': str(days_ago),
+                "days_ago": str(days_ago),
                 "dataset.time.end": str(dataset.time.end),
                 SCENEID: dataset.metadata.landsat_scene_id,
                 MSG: ("ancillary info %s" % msg),
             }
-            LOGGER.debug('no ancillary', **kwargs)
+            LOGGER.debug("no ancillary", **kwargs)
             if days_ago > dataset.time.end:
                 # If the ancillary files take too long to turn up
                 # process anyway
@@ -286,7 +286,7 @@ def l1_filter(
                     DATASETPATH: file_path,
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
-                LOGGER.debug('Fallback to interim', **kwargs)
+                LOGGER.debug("Fallback to interim", **kwargs)
             else:
                 kwargs = {
                     DATASETPATH: file_path,
