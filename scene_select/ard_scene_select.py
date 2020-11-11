@@ -8,7 +8,7 @@ from typing import List, Tuple, Optional
 import re
 import uuid
 import subprocess
-from datetime import datetime
+import datetime
 import click
 from logging.config import fileConfig
 
@@ -213,8 +213,8 @@ def exclude_days(days_to_exclude: List, checkdatetime):
         start, end = period.split(":")
         # datetime.timezone.utc
         # pytz.UTC
-        start = datetime.strptime(start, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
-        end = datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
+        start = datetime.datetime.strptime(start, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
+        end = datetime.datetime.strptime(end, "%Y-%m-%d").replace(tzinfo=checkdatetime.tzinfo)
 
         # let's make it the end of the day
         end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
@@ -271,18 +271,31 @@ def l1_filter(
         # since the ancillary files are not there
         ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
         if ancill_there is False:
-            # days_ago = datetime.now(dataset.time.end.tzinfo) - timedelta(days=interim_days_wait)
-            # if days_ago < dataset.time.end:
-            # If the ancillary files take too long to turn up
-            # process anyway
+            days_ago = datetime.datetime.now(dataset.time.end.tzinfo) - datetime.timedelta(days=interim_days_wait)
             kwargs = {
-                DATASETPATH: file_path,
+                'days_ago': str(days_ago),
+                "dataset.time.end": str(dataset.time.end),
                 SCENEID: dataset.metadata.landsat_scene_id,
-                REASON: "ancillary files not ready",
-                MSG: ("Not ready: %s" % msg),
+                MSG: ("ancillary info %s" % msg),
             }
-            LOGGER.info(SCENEREMOVED, **kwargs)
-            continue
+            LOGGER.debug('no ancillary', **kwargs)
+            if days_ago > dataset.time.end:
+                # If the ancillary files take too long to turn up
+                # process anyway
+                kwargs = {
+                    DATASETPATH: file_path,
+                    SCENEID: dataset.metadata.landsat_scene_id,
+                }
+                LOGGER.debug('Fallback to interim', **kwargs)
+            else:
+                kwargs = {
+                    DATASETPATH: file_path,
+                    SCENEID: dataset.metadata.landsat_scene_id,
+                    REASON: "ancillary files not ready",
+                    MSG: ("Not ready: %s" % msg),
+                }
+                LOGGER.info(SCENEREMOVED, **kwargs)
+                continue
 
         # FIXME remove the hard-coded list
         if exclude_days(days_to_exclude, dataset.time.end):
