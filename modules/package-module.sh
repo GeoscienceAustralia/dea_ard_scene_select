@@ -74,7 +74,7 @@ package_description="GA ARD scene select"
 package_dest=${module_dir}/${package_name}/${version}
 python_dest=${package_dest}/lib/python${python_version}/site-packages
 export package_name package_description package_dest python_dest
-printf 'Check code and run black first.'
+printf '# Remember to check-code.sh and run black first. #\n'
 printf '# Packaging "%s %s" to "%s" #\n' "$package_name" "$version" "$package_dest"
 
 read -p "Continue? [y/N]" -n 1 -r
