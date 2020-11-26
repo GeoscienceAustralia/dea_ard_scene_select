@@ -498,7 +498,7 @@ def make_ard_pbs(level1_list, **ard_click_params):
 )
 @click.option(
     "--interim-days-wait",
-    default=30,
+    default=35,
     type=int,
     help="Maximum number of days to wait for ancillary data before processing ARD to an interim maturity level.",
 )
