@@ -186,6 +186,7 @@ def calc_processed_ard_scene_ids(dc, product):
         ):
             choppped_id = chopped_scene_id(result.landsat_scene_id)
             if choppped_id in processed_ard_scene_ids:
+                # The same chopped scene id has multiple scenes
                 old_uuid = processed_ard_scene_ids[choppped_id]["id"]
                 LOGGER.warning(MANYSCENES, SCENEID=result.landsat_scene_id, old_uuid=old_uuid, new_uuid=result.id)
 
