@@ -13,6 +13,7 @@ import click
 from logging.config import fileConfig
 
 import pytz
+import pprint
 
 try:
     import datacube
@@ -152,15 +153,19 @@ def allowed_codes_to_region_codes(allowed_codes: Path) -> List:
     return path_row_list
 
 
+
 def dataset_with_child(dc, dataset):
     """
-    If any child exists that isn't archived
+    If any child exists that isn't archived, with a dataset_maturity of 'final'
     :param dc:
     :param dataset:
     :return:
     """
-    return any(not child_dataset.is_archived for child_dataset in dc.index.datasets.get_derived(dataset.id))
-
+    ds_w_child = []
+    for child_dataset in dc.index.datasets.get_derived(dataset.id):
+        if not child_dataset.is_archived and child_dataset.metadata.dataset_maturity == 'final':  
+            ds_w_child.append(child_dataset)
+    return any(ds_w_child)
 
 def chopped_scene_id(scene_id: str) -> str:
     """
@@ -225,7 +230,7 @@ def exclude_days(days_to_exclude: List, checkdatetime):
 
 
 def l1_filter(
-    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int, days_to_exclude: List,
+    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int, days_to_exclude: List, find_blocked: bool
 ):
     """return a list of file paths to ARD process """
     # pylint: disable=R0914
@@ -307,13 +312,30 @@ def l1_filter(
             }
             LOGGER.info(SCENEREMOVED, **kwargs)
             continue
-
+        # Do the data with child filter here
+        # It will slow things down
+        # But any chopped_scene_id in processed_ard_scene_ids
+        # will now be a blocked reprocessed scene
+        #if find_blocked is True:
+        scene_match_message = "The scene has been processed"
+        if find_blocked:
+            if dataset_with_child(dc, dataset):
+                kwargs = {
+                    DATASETPATH: file_path,
+                    REASON: "Skipping dataset with children",
+                    SCENEID: dataset.metadata.landsat_scene_id,
+                }
+                LOGGER.debug(SCENEREMOVED, **kwargs)
+                continue
+            else:
+                scene_match_message = "Potential reprocessed scene blocked from ARD processing"
+            
         if processed_ard_scene_ids:
             a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
             if a_chopped_scene_id in processed_ard_scene_ids:
                 kwargs = {
                     DATASETPATH: file_path,
-                    REASON: "The scene has been processed",
+                    REASON: scene_match_message,
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
                 LOGGER.debug(SCENEREMOVED, **kwargs)
@@ -354,6 +376,7 @@ def l1_scenes_to_process(
     scene_limit: int,
     interim_days_wait: int,
     days_to_exclude: List,
+    find_blocked: bool,
     config: Optional[Path] = None,
 ) -> Tuple[int, List[str]]:
     """Writes all the files returned from datacube for level1 to a text file."""
@@ -369,6 +392,7 @@ def l1_scenes_to_process(
                 region_codes=region_codes,
                 interim_days_wait=interim_days_wait,
                 days_to_exclude=days_to_exclude,
+                find_blocked=find_blocked
             )
             for fp in files2process:
                 fid.write(fp + "\n")
@@ -540,6 +564,7 @@ def make_ard_pbs(level1_list, **ard_click_params):
 @click.option("--nodes", help="The number of nodes to request.")
 @click.option("--memory", help="The memory in GB to request per node.")
 @click.option("--jobfs", help="The jobfs memory in GB to request per node.")
+@click.option("--find-blocked", default=False, is_flag=True, help="Find l1 scenes that have no children but are not getting processed..")
 @LogMainFunction()
 def scene_select(
     usgs_level1_files: click.Path,
@@ -555,6 +580,7 @@ def scene_select(
     interim_days_wait: int,
     days_to_exclude: list,
     run_ard: bool,
+    find_blocked: bool,
     **ard_click_params: dict,
 ):
     """
@@ -605,6 +631,7 @@ def scene_select(
             scene_limit=scene_limit,
             interim_days_wait=interim_days_wait,
             days_to_exclude=days_to_exclude,
+            find_blocked=find_blocked,
         )
         # ARCHIVE_FILE
         path_scenes_to_archive = jobdir.joinpath(ARCHIVE_FILE)
