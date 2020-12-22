@@ -15,12 +15,18 @@ module use /g/data/v10/public/modules/modulefiles
 module use /g/data/v10/private/modules/modulefiles
 module use /home/547/dsg547/devmodules/modulefiles
 
-module load ard-scene-select-py3-dea/20200909
+module load ard-scene-select-py3-dea/20201126
+
+[[ ":$PYTHONPATH:" != *":$SSPATH:"* ]] && PYTHONPATH="$SSPATH:${PYTHONPATH}"
 
 # For testing as a non-qsub execution
 INIT_PWD=$PWD
 
-ard-scene-select --products '["usgs_ls8c_level1_1"]' --workdir $INIT_PWD/scratch/ --pkgdir $INIT_PWD/scratch/ --logdir $INIT_PWD/scratch/ --env $INIT_PWD/prod-wagl.env --index-datacube-env $INIT_PWD/dsg547_dev.env  --project u46 --walltime 01:00:00 #  --config $INIT_PWD/dsg547_dev.conf  # --run-ard note will try and index
+# local dev
+python3 ../../../scene_select/ard_scene_select.py --products '["usgs_ls8c_level1_1"]' --workdir $INIT_PWD/scratch/ --pkgdir $INIT_PWD/scratch/ --logdir $INIT_PWD/scratch/ --env $INIT_PWD/prod-wagl.env --index-datacube-env $INIT_PWD/dsg547_dev.env  --project u46 --walltime 01:00:00  --config $INIT_PWD/dsg547_dev.conf
+
+# A module
+#ard-scene-select --products '["usgs_ls8c_level1_1"]' --workdir $INIT_PWD/scratch/ --pkgdir $INIT_PWD/scratch/ --logdir $INIT_PWD/scratch/ --env $INIT_PWD/prod-wagl.env --index-datacube-env $INIT_PWD/dsg547_dev.env  --project u46 --walltime 01:00:00  --config $INIT_PWD/dsg547_dev.conf  # --run-ard # note will try and index
 
 # to use the dev db
 #  --config $INIT_PWD/dsg547_dev.conf --products '["usgs_ls8c_level1_1"]'

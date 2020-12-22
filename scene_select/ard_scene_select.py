@@ -11,6 +11,7 @@ import subprocess
 import datetime
 import click
 from logging.config import fileConfig
+import time
 
 import pytz
 
@@ -29,6 +30,7 @@ ARCHIVE_FILE = "uuid_to_archive.txt"
 PRODUCTS = '["ga_ls5t_level1_3", "ga_ls7e_level1_3", \
                     "usgs_ls5t_level1_1", "usgs_ls7e_level1_1", "usgs_ls8c_level1_1"]'
 FMT2 = "filter-jobid-{jobid}"
+L1_ID = "current_l1_id"
 
 # Logging
 LOG_CONFIG_FILE = "log_config.ini"
@@ -39,6 +41,8 @@ SCENEREMOVED = "scene removed"
 SCENEADDED = "scene added"
 SUMMARY = "summary"
 MANYSCENES = "Multiple identical ARD scene ids"
+TIMING = "Timing"
+TODO = "To do"
 
 # LOGGER keys
 DATASETPATH = "dataset_path"
@@ -47,6 +51,8 @@ REASON = "reason"
 MSG = "message"
 DATASETID = "dataset_id"
 SCENEID = "landsat_scene_id"
+UUID = "uuid"
+PID = "landsat product id"
 
 # No such product - "ga_ls8c_level1_3": "ga_ls8c_ard_3",
 ARD_PARENT_PRODUCT_MAPPING = {
@@ -180,6 +186,8 @@ def calc_processed_ard_scene_ids(dc, product):
 """
 
     if product in ARD_PARENT_PRODUCT_MAPPING:
+
+        start = time.perf_counter()
         processed_ard_scene_ids = {}
         for result in dc.index.datasets.search_returning(
             ("landsat_scene_id", "dataset_maturity", "id"), product=ARD_PARENT_PRODUCT_MAPPING[product]
@@ -194,6 +202,10 @@ def calc_processed_ard_scene_ids(dc, product):
                 "dataset_maturity": result.dataset_maturity,
                 "id": result.id,
             }
+        end = time.perf_counter()
+        kwargs = {"result": f"calc_processed_ard_scene_ids {end - start:0.4f} seconds"}
+        LOGGER.debug(TIMING, **kwargs)
+
     else:
         # scene select has its own mapping for l1 product to ard product
         # (ARD_PARENT_PRODUCT_MAPPING).
@@ -222,6 +234,59 @@ def exclude_days(days_to_exclude: List, checkdatetime):
         if start <= checkdatetime <= end:
             return True
     return False
+
+
+def multiple_l1_logging(l1_pid, l1_uuid, ard_pid, ard_uuid, scene_id):
+    if l1_pid == ard_pid:
+        # Log that this scene should be archived.  Need l1_id
+        kwargs = {
+            REASON: "Reprocessed scene available.  Check and archive this ARD scene.",
+            SCENEID: scene_id,
+            UUID: l1_uuid,
+            "l1_product_id": ard_pid,
+        }
+    else:
+        # Log not ARD processing reprocessed l1 scene.
+        kwargs = {
+            REASON: "Not ARD processing reprocessed l1 scene.",
+            SCENEID: scene_id,
+            UUID: l1_uuid,
+            "ard_product_id": l1_pid,
+        }
+    LOGGER.warn(TODO, **kwargs)
+
+
+def pid_from_uuid(id, dc):
+    # There is probably a faster way.
+    dataset_fields = dc.index.datasets.search_summaries(id=id)
+    pid = next(dataset_fields)["metadata_doc"]["properties"]["landsat:landsat_product_id"]
+    return pid
+
+
+def multiple_l1_check(current_uuid, processed_ard_scene_ids, a_chopped_scene_id, dc):
+    # This is an slow function so it shouldn't be called much.
+    # Get the pid's to see what is happening.
+    ard_uuid = processed_ard_scene_ids[a_chopped_scene_id]["id"]
+    ard_pid = pid_from_uuid(ard_uuid, dc)
+
+    prev_l1_uuid = processed_ard_scene_ids[a_chopped_scene_id][L1_ID]
+    prev_l1_pid = pid_from_uuid(prev_l1_uuid, dc)
+
+    current_l1_pid = pid_from_uuid(current_uuid, dc)
+
+    multiple_l1_logging(prev_l1_pid, prev_l1_uuid, ard_pid, ard_uuid, a_chopped_scene_id)
+    multiple_l1_logging(current_l1_pid, current_uuid, ard_pid, ard_uuid, a_chopped_scene_id)
+
+
+def reprocessed_check(dataset, processed_ard_scene_ids, a_chopped_scene_id, dc):
+    # Add the current l1_id
+    if L1_ID not in processed_ard_scene_ids[a_chopped_scene_id]:
+        # No l1 associated with the scene ARD
+        processed_ard_scene_ids[a_chopped_scene_id][L1_ID] = dataset.id
+    else:
+        # Multiple l1s for an ARD scene.
+        # Let's log
+        multiple_l1_check(dataset.id, processed_ard_scene_ids, a_chopped_scene_id, dc)
 
 
 def l1_filter(
@@ -317,6 +382,12 @@ def l1_filter(
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
                 LOGGER.debug(SCENEREMOVED, **kwargs)
+
+                # If you want to parallelise scene select do this
+                # another way.
+                reprocessed_check(dataset, processed_ard_scene_ids, a_chopped_scene_id, dc)
+
+                # Handle interim ARD scenes
                 produced_ard = processed_ard_scene_ids[a_chopped_scene_id]
                 if produced_ard["dataset_maturity"] == "interim" and ancill_there is True:
                     # lets build a list of ARD uuid's to delete

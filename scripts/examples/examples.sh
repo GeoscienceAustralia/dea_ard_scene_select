@@ -22,12 +22,12 @@ SSPATH=$PWD/../../
 
 #  local code local work dir, all products
 # slow
-#python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
+time python3 ../../scene_select/ard_scene_select.py  --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
 
 # This will use the dev ard scene select too..., all products
 # unless the PYTHONPATH line above is commented out
 # slow
-time ard-scene-select  --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 02:30:00 --scene-limit 999999   --days-to-exclude '["2020-08-09:2020-09-03"]'
+#time ard-scene-select  --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 02:30:00 --scene-limit 999999   #--days-to-exclude '["2020-08-09:2020-09-03"]'
 
 #  local code local work dir ls5t
 # use ODC, fast for OEC
