@@ -257,7 +257,8 @@ def l1_filter(
             kwargs = {
                 SCENEID: dataset.metadata.landsat_scene_id,
                 REASON: "Region not in AOI",
-                MSG: ("Path row %s" % dataset.metadata.region_code),
+                'region_code': ("%s" % dataset.metadata.region_code),
+                'uuid':dataset.id,
             }
             LOGGER.debug(SCENEREMOVED, **kwargs)
             continue
@@ -317,8 +318,9 @@ def l1_filter(
         # But any chopped_scene_id in processed_ard_scene_ids
         # will now be a blocked reprocessed scene
         #if find_blocked is True:
-        scene_match_message = "The scene has been processed"
+        removed_processed_scenes = False
         if find_blocked:
+            removed_processed_scenes = True
             if dataset_with_child(dc, dataset):
                 kwargs = {
                     DATASETPATH: file_path,
@@ -327,17 +329,21 @@ def l1_filter(
                 }
                 LOGGER.debug(SCENEREMOVED, **kwargs)
                 continue
-            else:
-                scene_match_message = "Potential reprocessed scene blocked from ARD processing"
             
         if processed_ard_scene_ids:
             a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
             if a_chopped_scene_id in processed_ard_scene_ids:
                 kwargs = {
                     DATASETPATH: file_path,
-                    REASON: scene_match_message,
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
+                if removed_processed_scenes:
+                    kwargs[REASON] = "Potential reprocessed scene blocked from ARD processing"
+                    # Could do this, but the info is in the file path
+                    #kwargs['landsat_product_id']
+                else:
+                    kwargs[REASON] = "The scene has been processed"
+
                 LOGGER.debug(SCENEREMOVED, **kwargs)
                 produced_ard = processed_ard_scene_ids[a_chopped_scene_id]
                 if produced_ard["dataset_maturity"] == "interim" and ancill_there is True:
