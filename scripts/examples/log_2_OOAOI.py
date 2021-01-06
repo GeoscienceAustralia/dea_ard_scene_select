@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+"""
+OOAOI - Out of Australian area of interest.
+"""
+
 import json
 
 import datacube

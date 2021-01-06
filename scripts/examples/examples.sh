@@ -22,7 +22,7 @@ SSPATH=$PWD/../../
 
 #  local code local work dir, all products
 # slow
-time python3 ../../scene_select/ard_scene_select.py   --products '["usgs_ls8c_level1_1"]'   --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]'
+time python3 ../../scene_select/ard_scene_select.py   --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]'
 
 # --products '["ga_ls5t_level1_3"]'
 
@@ -54,5 +54,3 @@ time python3 ../../scene_select/ard_scene_select.py   --products '["usgs_ls8c_le
 
 # using Australian_Wrs_list.txt
 #python3 ../../scene_select/ard_scene_select.py  --usgs-level1-files ../../tests/test_data/All_Landsat_Level1_Nci_Files.txt  --workdir scratch/ --allowed-codes ../../tests/test_data/standard_wrs_list.txt  --logdir scratch/
-
-#python3 ../../scene_select/ard_scene_select.py  --products '["2020-08-09:2020-08-30", "2020-09-02:2020-09-05"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging
