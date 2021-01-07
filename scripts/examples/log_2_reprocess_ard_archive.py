@@ -2,6 +2,30 @@
 
 """
 
+Step 1 – duplicate dataset to be archived in staging area
+
+1.       Duplicate the archived dataset in “staging for removal” location”
+
+2.       Update location [in ODC] to point to location in “staged for removal location”
+
+3.       Wait prerequisite flush period (until queue empties)
+
+4.       Trash original
+
+Step 2 – write new replacement dataset
+
+1.       Produce new dataset
+
+2.       Index new dataset and archive the staged for deletion original dataset.
+
+3.       Trash staged for removal copy.
+
+1.1 Needs the new location and a list of all the ARD directories to move to the new location.
+1.2 the uuids of the datasets to move and a way of knowing the new dir location
+1.4 Needs a list of directories to move to a trash area, and then delete
+
+2.1 needs a list of ls8 l1 tars to ard process
+2.1 needs an go scene script to do the processing 
 """
 
 import json
@@ -37,7 +61,7 @@ def calc_processed_ard_scene_ids(dc, ard_product):
 
     processed_ard_scene_ids = {}
     for result in dc.index.datasets.search_returning(
-            ("landsat_scene_id", "dataset_maturity", "id"), product=product):
+            ("landsat_scene_id", "id", "uri"), product=product):
         choppped_id = chopped_scene_id(result.landsat_scene_id)
         if choppped_id in processed_ard_scene_ids:
             # The same chopped scene id has multiple scenes
@@ -46,14 +70,14 @@ def calc_processed_ard_scene_ids(dc, ard_product):
             #LOGGER.warning(MANYSCENES, SCENEID=result.landsat_scene_id, old_uuid=old_uuid, new_uuid=result.id)
 
         processed_ard_scene_ids[chopped_scene_id(result.landsat_scene_id)] = {
-            "dataset_maturity": result.dataset_maturity,
+            "uri": result.uri,
             "id": result.id,
-        }
+        } # The uri gets the yam.  I want the tar
     return processed_ard_scene_ids
 
 dc = datacube.Datacube(app="gen-list")
 product='ga_ls8c_ard_3'
-
+print(dc.index.datasets.get_field_names(product_name=product))
 processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
 landsat_scene_ids = []
 sum = 0
@@ -68,20 +92,25 @@ with open(log_file) as f:
 
 print (sum)
 print (landsat_scene_ids)
+
+old_ard_uuids = []
 for landsat_scene_id in landsat_scene_ids:
-    if False:
+    if landsat_scene_id in processed_ard_scene_ids:
+        print (processed_ard_scene_ids[landsat_scene_id])
+        old_ard_uuids.append(processed_ard_scene_ids[landsat_scene_id]['id'])
+
+if True:
+    f_out = open("old_ards_to_archive.txt", "w")
+    for a_uuid in old_ard_uuids:
+        f_out.write(str(a_uuid) + '\n')
+    f_out.close() 
+
+ 
+if False:
         # this produced empty data sets
         datasets =  list(dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product))
         # There should only be 1 dataset per scene
         #assert len(datasets) == 1
         print ('*****************')
         print (len(datasets))
-        print (list(datasets))
-    if landsat_scene_id in processed_ard_scene_ids:
-        print (processed_ard_scene_ids[landsat_scene_id])
-
-if False:
-    f_out = open("my_to_archive.txt", "w")
-    for a_uuid in uuids:
-        f_out.write(a_uuid + '\n')
-        f_out.close() 
+        print (list(datasets))       
