@@ -645,6 +645,7 @@ def scene_select(
             for item in uuids2archive:
                 fid.write("%s\n" % item)
     else:
+        uuids2archive = []
         with open(usgs_level1_files) as f:
             i = 0
             for i, l in enumerate(f):
