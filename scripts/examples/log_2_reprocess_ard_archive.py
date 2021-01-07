@@ -81,7 +81,7 @@ print(dc.index.datasets.get_field_names(product_name=product))
 processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
 chopped_landsat_scene_ids = []
 new_l1 = {}
-sum = 0
+blocked_scenes = 0
 with open(log_file) as f:
     for line in f:
         line_dict = json.loads(line)
@@ -94,7 +94,7 @@ with open(log_file) as f:
             new_l1[chopped_scene] = line_dict['dataset_path']
             
 print (blocked_scenes)
-print (lchopped_andsat_scene_ids)
+print (chopped_landsat_scene_ids)
 
 old_ard_uuids = []
 grouped_data = {}
@@ -109,15 +109,24 @@ for chopped_landsat_scene_id in chopped_landsat_scene_ids:
             
         }
 
+# l1_new_dataset_path - Needed for the list of tars to ARD process
+# "ard_old_dataset_dir - used for moving out of the way
+# ard_old_uuid - updating and archiving
 
 grouped_data = {}
 for chopped_scene, l1_ard_path in new_l1.items():
     if chopped_scene in processed_ard_scene_ids:
-        dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product)
+        #dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product)
+        ard_old_uuid = processed_ard_scene_ids[chopped_landsat_scene_id]['id']
+        a_dataset = list(dc.index.datasets.search(id=ard_old_uuid, product=product))
+        #print (list(a_dataset))
+        #print (a_dataset[0].metadata.landsat_product_id)
+        # Unknown field 'landsat_product_id'.
+        #file_path = (dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix())
         grouped_data[chopped_landsat_scene_id] = {
             "l1_new_dataset_path":l1_ard_path,
             "ard_old_dataset_dir":None,
-            "ard_old_uuid":(str(processed_ard_scene_ids[chopped_landsat_scene_id]['id'])),
+            "ard_old_uuid":str(ard_old_uuid),
             
         }
 
@@ -130,7 +139,7 @@ if True:
     f_out = open("old_ards_to_archive.txt", "w")
     for a_uuid in old_ard_uuids:
         f_out.write(str(a_uuid) + '\n')
-    f_out.close(landsat_scene_id) 
+    f_out.close() 
 
  
 if False:
