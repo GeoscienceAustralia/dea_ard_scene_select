@@ -20,8 +20,8 @@ Step 2 – write new replacement dataset
 
 3.       Trash staged for removal copy.
 
-1.1 Needs the new location and a list of all the ARD directories to move to the new location.
-1.2 the uuids of the datasets to move and a way of knowing the new dir location
+1.1 Needs the new location and a list of all the old ARD directories to move to the new location.
+1.2 the uuids of the old _ard datasets to move and a way of knowing the new dir location
 1.4 Needs a list of directories to move to a trash area, and then delete
 
 2.1 needs a list of ls8 l1 tars to ard process
@@ -79,31 +79,58 @@ dc = datacube.Datacube(app="gen-list")
 product='ga_ls8c_ard_3'
 print(dc.index.datasets.get_field_names(product_name=product))
 processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
-landsat_scene_ids = []
+chopped_landsat_scene_ids = []
+new_l1 = {}
 sum = 0
 with open(log_file) as f:
     for line in f:
         line_dict = json.loads(line)
         #print (line_dict)
         if 'reason' in line_dict and line_dict['reason'] == "Potential reprocessed scene blocked from ARD processing":
-            sum += 1
+            blocked_scenes += 1
             print (line_dict)
-            landsat_scene_ids.append(chopped_scene_id(line_dict['landsat_scene_id']))
-
-print (sum)
-print (landsat_scene_ids)
+            chopped_scene = chopped_scene_id(line_dict['landsat_scene_id'])
+            chopped_landsat_scene_ids.append(chopped_scene)
+            new_l1[chopped_scene] = line_dict['dataset_path']
+            
+print (blocked_scenes)
+print (lchopped_andsat_scene_ids)
 
 old_ard_uuids = []
-for landsat_scene_id in landsat_scene_ids:
-    if landsat_scene_id in processed_ard_scene_ids:
-        print (processed_ard_scene_ids[landsat_scene_id])
-        old_ard_uuids.append(processed_ard_scene_ids[landsat_scene_id]['id'])
+grouped_data = {}
+for chopped_landsat_scene_id in chopped_landsat_scene_ids:
+    if chopped_landsat_scene_id in processed_ard_scene_ids:
+        print (processed_ard_scene_ids[chopped_landsat_scene_id])
+        old_ard_uuids.append(processed_ard_scene_ids[chopped_landsat_scene_id]['id'])
+        grouped_data[chopped_landsat_scene_id] = {
+            "l1_new_dataset_path":None,
+            "ard_old_dataset_dir":None,
+            "ard_old_dataset_dir":None,
+            
+        }
 
+
+grouped_data = {}
+for chopped_scene, l1_ard_path in new_l1.items():
+    if chopped_scene in processed_ard_scene_ids:
+        dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product)
+        grouped_data[chopped_landsat_scene_id] = {
+            "l1_new_dataset_path":l1_ard_path,
+            "ard_old_dataset_dir":None,
+            "ard_old_uuid":(str(processed_ard_scene_ids[chopped_landsat_scene_id]['id'])),
+            
+        }
+
+print ('******************')
+print (grouped_data)
+print ('******************')
+
+            
 if True:
     f_out = open("old_ards_to_archive.txt", "w")
     for a_uuid in old_ard_uuids:
         f_out.write(str(a_uuid) + '\n')
-    f_out.close() 
+    f_out.close(landsat_scene_id) 
 
  
 if False:
