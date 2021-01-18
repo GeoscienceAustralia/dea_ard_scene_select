@@ -4,7 +4,7 @@
 
 Step 1 – duplicate dataset to be archived in staging area
 
-1.       Duplicate the archived dataset in “staging for removal” location”
+1.       Duplicate the [to be] archived dataset in “staging for removal” location”
 
 2.       Update location [in ODC] to point to location in “staged for removal location”
 
@@ -16,16 +16,19 @@ Step 2 – write new replacement dataset
 
 1.       Produce new dataset
 
-2.       Index new dataset and archive the staged for deletion original dataset.
+2a.       Index new dataset
+2b.       Archive the staged for deletion original dataset.
 
 3.       Trash staged for removal copy.
 
+Requirements
 1.1 Needs the new location and a list of all the old ARD directories to move to the new location.
 1.2 the uuids of the old _ard datasets to move and a way of knowing the new dir location
 1.4 Needs a list of directories to move to a trash area, and then delete
 
-2.1 needs a list of ls8 l1 tars to ard process
-2.1 needs an go scene script to do the processing 
+2.1 needs a list of reprocessed ls8 l1 tars to ard process
+2.1b needs a go scene script to do the processing 
+2.2b Needs a list of old ard scenes to archive
 """
 
 import json
@@ -56,7 +59,7 @@ def chopped_scene_id(scene_id: str) -> str:
 
 
 def calc_processed_ard_scene_ids(dc, ard_product):
-    """Return None or a dictionary with key chopped_scene_id and value  maturity level.
+    """Return None or a dictionary with key chopped_scene_id, uri and id.
 """
 
     processed_ard_scene_ids = {}
@@ -72,7 +75,7 @@ def calc_processed_ard_scene_ids(dc, ard_product):
         processed_ard_scene_ids[chopped_scene_id(result.landsat_scene_id)] = {
             "uri": result.uri,
             "id": result.id,
-        } # The uri gets the yam.  I want the tar
+        } # The uri gets the yaml.  I want the tar
     return processed_ard_scene_ids
 
 dc = datacube.Datacube(app="gen-list")
@@ -96,6 +99,8 @@ with open(log_file) as f:
 print (blocked_scenes)
 print (chopped_landsat_scene_ids)
 
+# The old way
+# let's build a dictionary that has all the info.
 old_ard_uuids = []
 grouped_data = {}
 for chopped_landsat_scene_id in chopped_landsat_scene_ids:
@@ -109,39 +114,56 @@ for chopped_landsat_scene_id in chopped_landsat_scene_ids:
             
         }
 
-# l1_new_dataset_path - Needed for the list of tars to ARD process
-# "ard_old_dataset_dir - used for moving out of the way
-# ard_old_uuid - updating and archiving
+# The new way
+# Building a dict with all the info.
+        
+# l1_new_dataset_path - R2.1 Needed for the list of tars to ARD process
+# "ard_old_dataset_yaml - used for moving out of the way
+# ard_old_uuid - R2.2b updating and archiving
 
 grouped_data = {}
 for chopped_scene, l1_ard_path in new_l1.items():
     if chopped_scene in processed_ard_scene_ids:
         #dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product)
-        ard_old_uuid = processed_ard_scene_ids[chopped_landsat_scene_id]['id']
-        a_dataset = list(dc.index.datasets.search(id=ard_old_uuid, product=product))
+        ard_old_uuid = processed_ard_scene_ids[chopped_scene]['id']
+        a_dataset_list = list(dc.index.datasets.search(id=ard_old_uuid, product=product))
+        assert len(a_dataset_list) == 1
+        a_dataset = a_dataset_list[0]
+        #print(a_dataset)
+        #print(dir(a_dataset))
+        #print(a_dataset.local_path)
+
         #print (list(a_dataset))
         #print (a_dataset[0].metadata.landsat_product_id)
         # Unknown field 'landsat_product_id'.
         #file_path = (dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix())
-        grouped_data[chopped_landsat_scene_id] = {
+        grouped_data[chopped_scene] = {
             "l1_new_dataset_path":l1_ard_path,
-            "ard_old_dataset_dir":None,
+            "ard_old_dataset_yaml":a_dataset.local_path,
             "ard_old_uuid":str(ard_old_uuid),
             
         }
 
-print ('******************')
-print (grouped_data)
-print ('******************')
+if False:
+    print ('******** new_l1  **********')
+    print (new_l1)
+    print ('******************')
+
+   
+if True:        
+    print ('******** grouped_data  **********')
+    print (grouped_data)
+    print ('******************')
 
             
-if True:
+if False: #True:
     f_out = open("old_ards_to_archive.txt", "w")
     for a_uuid in old_ard_uuids:
         f_out.write(str(a_uuid) + '\n')
     f_out.close() 
 
- 
+
+# for requirement 2.2b
 if False:
         # this produced empty data sets
         datasets =  list(dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product))
