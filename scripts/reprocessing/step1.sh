@@ -23,14 +23,14 @@ mkdir -p $new_path
 rsync -av $old_path $new_path
 
 echo product='ga_ls8c_ard_3'
-datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep -E -- '^id: |file:'
+datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep -E -- '^id: |file:'
 
 # Update needs documentation...
 newyaml="$new_base$1"
 echo $newyaml
 datacube --config dsg547_dev.conf dataset update $newyaml  --location-policy forget #  --dry-run
 
-echo product='usgs_ls8c_level1_1'
-datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep -e '^id: ' -e 'file:'
+echo product='ga_ls8c_ard_3'
+datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep -e '^id: ' -e 'file:'
 #datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep -E -- '^id: |file:'
 # You now have a database with 1 level 1 ls8 scene

@@ -160,7 +160,13 @@ if False: #True:
     f_out = open("old_ards_to_archive.txt", "w")
     for a_uuid in old_ard_uuids:
         f_out.write(str(a_uuid) + '\n')
-    f_out.close() 
+    f_out.close()
+
+if True:
+    f_out = open("old_ards_to_archive.txt", "w")
+    for a_uuid in old_ard_uuids:
+        f_out.write(str(a_uuid) + '\n')
+    f_out.close()
 
 
 # for requirement 2.2b
