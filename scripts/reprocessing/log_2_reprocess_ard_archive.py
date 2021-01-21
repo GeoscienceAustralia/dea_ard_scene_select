@@ -8,33 +8,34 @@ Step 1 – duplicate dataset to be archived in staging area
 
 2.       Update location [in ODC] to point to location in “staged for removal location”
 
-3.       Wait prerequisite flush period (until queue empties)
+3.       Wait prerequisite flush period (until queue empties) - 2 hours?
 
 4.       Trash original
 
 Step 2 – write new replacement dataset
 
 1.       Produce new dataset
-
 2a.       Index new dataset
 2b.       Archive the staged for deletion original dataset.
 
 3.       Trash staged for removal copy.
 
 Requirements
-1.1 Needs the new location and a list of all the old ARD directories to move to the new location.
-1.2 the uuids of the old _ard datasets to move and a way of knowing the new dir location
-1.4 Needs a list of directories to move to a trash area, and then delete
+1.1 A list of all the old ARD directories to move to the new location, relative to the base dir. - produced by this code.
+1.2 The base dir of the old location and the new location. 
+1.4 No new requirements.
 
-2.1 needs a list of reprocessed ls8 l1 tars to ard process
-2.1b needs a go scene script to do the processing 
-2.2b Needs a list of old ard scenes to archive
+Do these steps by calling ard interface directly
+2.1 needs a list of reprocessed ls8 l1 tars to ard process  
+2.2b Needs a list of old ard uuid's to archive
 """
-
+import pathlib
 import json
+import jsonpickle
+
 import datacube
 
-log_file = '/g/data1a/u46/users/dsg547/sandpit/dea-ard-scene-select/scripts/examples/scratch/find_blocked_usgs_ls8c_level1_1/ard_scene_select.log'
+log_file = 'reprocess.txt'
 
 ARD_PARENT_PRODUCT_MAPPING = {
     "ga_ls5t_level1_3": "ga_ls5t_ard_3",
@@ -149,32 +150,35 @@ if False:
     print (new_l1)
     print ('******************')
 
-   
+
+    
 if True:        
     print ('******** grouped_data  **********')
     print (grouped_data)
-    print ('******************')
+    print ('******** grouped_data **********')
 
-            
-if False: #True:
-    f_out = open("old_ards_to_archive.txt", "w")
-    for a_uuid in old_ard_uuids:
-        f_out.write(str(a_uuid) + '\n')
-    f_out.close()
-
+    
 if True:
-    f_out = open("old_ards_to_archive.txt", "w")
-    for a_uuid in old_ard_uuids:
-        f_out.write(str(a_uuid) + '\n')
-    f_out.close()
+    f_uuid = open("old_ards_to_archive.txt", "w")
+    f_old_ard_yaml = open("old_ard_yaml.txt", "w")
+    for _, scene  in grouped_data.items():
+        print(scene)
+        base = "/g/data/xu18/ga/" 
+        print ( type(scene['ard_old_dataset_yaml']))
+        print ( scene['ard_old_dataset_yaml'].parts)
+        print ( scene['ard_old_dataset_yaml'].relative_to(base))
+        path_from_base =  scene['ard_old_dataset_yaml'].relative_to(base)
+        f_old_ard_yaml.write(str(path_from_base) + '\n')
+    f_uuid.close()
+    f_old_ard_yaml.close()
 
-
-# for requirement 2.2b
-if False:
-        # this produced empty data sets
-        datasets =  list(dc.index.datasets.search(landsat_scene_id=landsat_scene_id, product=product))
-        # There should only be 1 dataset per scene
-        #assert len(datasets) == 1
-        print ('*****************')
-        print (len(datasets))
-        print (list(datasets))       
+        
+if True:
+    # This isn't being used by anything.
+    # It's more a record.
+    with open('grouped_data.jsonpickle', 'w') as handle:
+        # TypeError: Object of type 'PosixPath' is not JSON serializable
+        # json.dump(grouped_data, handle)
+        json_obj = jsonpickle.encode(grouped_data)
+        handle.write(json_obj)
+        #jsonpickle.dump(grouped_data, handle) 
