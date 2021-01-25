@@ -23,7 +23,7 @@ SSPATH=$PWD/../../
 
 #  local code local work dir, all products
 # slow
-time python3 ../../scene_select/ard_scene_select.py --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]'
+time python3 ../../scene_select/ard_scene_select.py --workdir scratch/ --products '["usgs_ls8c_level1_1"]'  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]'
 
 # --products '["ga_ls5t_level1_3"]'
 
