@@ -59,13 +59,18 @@ def chopped_scene_id(scene_id: str) -> str:
     return capture_id
 
 
-def calc_processed_ard_scene_ids(dc, ard_product):
-    """Return None or a dictionary with key chopped_scene_id, uri and id.
+# It was this.  Why?
+#def calc_processed_ard_scene_ids(dc, ard_product)
+
+def calc_processed_ard_scene_ids(dc, product):
+    """Return None or a dictionary where key ischopped_scene_id, 
+    value is uri and id in a dictionary.
 """
 
     processed_ard_scene_ids = {}
-    for result in dc.index.datasets.search_returning(
-            ("landsat_scene_id", "id", "uri"), product=product):
+    #for result in dc.index.datasets.search_returning(
+    #       ("landsat_scene_id", "id", "uri"), product=product):
+    for result in dc.index.datasets.search(product=product):
         choppped_id = chopped_scene_id(result.landsat_scene_id)
         if choppped_id in processed_ard_scene_ids:
             # The same chopped scene id has multiple scenes
