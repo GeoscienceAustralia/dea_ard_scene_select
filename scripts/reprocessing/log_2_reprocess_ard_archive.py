@@ -133,13 +133,13 @@ for chopped_scene, l1_ard_path in new_l1.items():
         grouped_data[chopped_scene] = {
             "l1_new_dataset_path":l1_ard_path,
             "ard_old_dataset_yaml":a_dataset.local_path,
-            "ard_old_uuid":str(ard_old_uuid),
-            
+            "ard_old_uuid":str(ard_old_uuid),            
         }
 
 if True:
     f_uuid = open("old_ards_to_archive.txt", "w")
     f_old_ard_yaml = open("old_ard_yaml.txt", "w")
+    #f_new_l1 = open("old_ard_yaml.txt", "w")
     for _, scene  in grouped_data.items():
         #print(scene)
         base = "/g/data/xu18/ga/" 
