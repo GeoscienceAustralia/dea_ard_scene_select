@@ -166,4 +166,4 @@ if True:
 if True:
     with open('rejected_2_reprocess.txt', 'w') as f:
         for item in other_blocked_l1:
-            f.write("%s\n" % item)
+            f.write("%s" % item)
