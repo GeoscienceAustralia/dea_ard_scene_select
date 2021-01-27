@@ -88,7 +88,7 @@ def calc_processed_ard_scene_ids(dc, product):
 in_area_file = "in_area_19shr_chopped_scene_id.txt"
 
 in_area_chopped_scene_id = set(line.strip() for line in open(in_area_file))
-print (in_area_chopped_scene_id)
+#print (in_area_chopped_scene_id)
 print (len(in_area_chopped_scene_id))
 
 dc = datacube.Datacube(app="gen-list")
@@ -97,19 +97,23 @@ print(dc.index.datasets.get_field_names(product_name=product))
 processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
 chopped_landsat_scene_ids = []
 new_l1 = {}
-blocked_scenes = 0
+other_blocked_l1 = []
 with open(log_file) as f:
     for line in f:
         line_dict = json.loads(line)
         #print (line_dict)
-        if 'reason' in line_dict and line_dict['reason'] == "Potential reprocessed scene blocked from ARD processing":
-            blocked_scenes += 1
-            print (line_dict)
-            chopped_scene = chopped_scene_id(line_dict['landsat_scene_id'])
+        chopped_scene = chopped_scene_id(line_dict['landsat_scene_id'])
+        if chopped_scene in in_area_chopped_scene_id:
+            #print (line_dict)
             chopped_landsat_scene_ids.append(chopped_scene)
             new_l1[chopped_scene] = line_dict['dataset_path']
+            in_area_chopped_scene_id.remove(chopped_scene)
+        else:
+            other_blocked_l1.append(line)
+
+print ("in_area_chopped_scene_ids not in the scene select logs")
+print (in_area_chopped_scene_id)
             
-#print (blocked_scenes)
 #print (chopped_landsat_scene_ids)
 
 # Build a dict with all the info of new l1 old ARD pairs.  
@@ -133,30 +137,18 @@ for chopped_scene, l1_ard_path in new_l1.items():
             
         }
 
-if False:
-    print ('******** new_l1  **********')
-    print (new_l1)
-    print ('******************')
-
-
-    
-if False:        
-    print ('******** grouped_data  **********')
-    print (grouped_data)
-    print ('******** grouped_data **********')
-
-    
 if True:
     f_uuid = open("old_ards_to_archive.txt", "w")
     f_old_ard_yaml = open("old_ard_yaml.txt", "w")
     for _, scene  in grouped_data.items():
-        print(scene)
+        #print(scene)
         base = "/g/data/xu18/ga/" 
-        print ( type(scene['ard_old_dataset_yaml']))
-        print ( scene['ard_old_dataset_yaml'].parts)
-        print ( scene['ard_old_dataset_yaml'].relative_to(base))
+        #print ( type(scene['ard_old_dataset_yaml']))
+        #print ( scene['ard_old_dataset_yaml'].parts)
+        #print ( scene['ard_old_dataset_yaml'].relative_to(base))
         path_from_base =  scene['ard_old_dataset_yaml'].relative_to(base)
         f_old_ard_yaml.write(str(path_from_base) + '\n')
+        f_uuid.write(str(scene['ard_old_uuid']) + '\n')
     f_uuid.close()
     f_old_ard_yaml.close()
 
@@ -170,3 +162,8 @@ if True:
         json_obj = jsonpickle.encode(grouped_data)
         handle.write(json_obj)
         #jsonpickle.dump(grouped_data, handle) 
+
+if True:
+    with open('rejected_2_reprocess.txt', 'w') as f:
+        for item in other_blocked_l1:
+            f.write("%s\n" % item)
