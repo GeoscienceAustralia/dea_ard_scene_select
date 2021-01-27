@@ -68,9 +68,8 @@ def calc_processed_ard_scene_ids(dc, product):
 """
 
     processed_ard_scene_ids = {}
-    #for result in dc.index.datasets.search_returning(
-    #       ("landsat_scene_id", "id", "uri"), product=product):
-    for result in dc.index.datasets.search(product=product):
+    for result in dc.index.datasets.search_returning(
+           ("landsat_scene_id", "id", "uri"), product=product):
         choppped_id = chopped_scene_id(result.landsat_scene_id)
         if choppped_id in processed_ard_scene_ids:
             # The same chopped scene id has multiple scenes
@@ -83,6 +82,14 @@ def calc_processed_ard_scene_ids(dc, product):
             "id": result.id,
         } # The uri gets the yaml.  I want the tar
     return processed_ard_scene_ids
+
+#### END OF FUNCTIONS ####
+
+in_area_file = "in_area_19shr_chopped_scene_id.txt"
+
+in_area_chopped_scene_id = set(line.strip() for line in open(in_area_file))
+print (in_area_chopped_scene_id)
+print (len(in_area_chopped_scene_id))
 
 dc = datacube.Datacube(app="gen-list")
 product='ga_ls8c_ard_3'
@@ -102,27 +109,10 @@ with open(log_file) as f:
             chopped_landsat_scene_ids.append(chopped_scene)
             new_l1[chopped_scene] = line_dict['dataset_path']
             
-print (blocked_scenes)
-print (chopped_landsat_scene_ids)
+#print (blocked_scenes)
+#print (chopped_landsat_scene_ids)
 
-# The old way
-# let's build a dictionary that has all the info.
-old_ard_uuids = []
-grouped_data = {}
-for chopped_landsat_scene_id in chopped_landsat_scene_ids:
-    if chopped_landsat_scene_id in processed_ard_scene_ids:
-        print (processed_ard_scene_ids[chopped_landsat_scene_id])
-        old_ard_uuids.append(processed_ard_scene_ids[chopped_landsat_scene_id]['id'])
-        grouped_data[chopped_landsat_scene_id] = {
-            "l1_new_dataset_path":None,
-            "ard_old_dataset_dir":None,
-            "ard_old_dataset_dir":None,
-            
-        }
-
-# The new way
-# Building a dict with all the info.
-        
+# Build a dict with all the info of new l1 old ARD pairs.  
 # l1_new_dataset_path - R2.1 Needed for the list of tars to ARD process
 # "ard_old_dataset_yaml - used for moving out of the way
 # ard_old_uuid - R2.2b updating and archiving
@@ -135,13 +125,6 @@ for chopped_scene, l1_ard_path in new_l1.items():
         a_dataset_list = list(dc.index.datasets.search(id=ard_old_uuid, product=product))
         assert len(a_dataset_list) == 1
         a_dataset = a_dataset_list[0]
-        #print(a_dataset)
-        #print(dir(a_dataset))
-        #print(a_dataset.local_path)
-
-        #print (list(a_dataset))
-        #print (a_dataset[0].metadata.landsat_product_id)
-        # Unknown field 'landsat_product_id'.
         #file_path = (dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix())
         grouped_data[chopped_scene] = {
             "l1_new_dataset_path":l1_ard_path,
@@ -157,7 +140,7 @@ if False:
 
 
     
-if True:        
+if False:        
     print ('******** grouped_data  **********')
     print (grouped_data)
     print ('******** grouped_data **********')

@@ -46,7 +46,7 @@ def load_aoi_usgs2(allowed_codes: Path) -> List:
 
 
 if __name__ == "__main__":    
-    aoi_oz = 'Australian_Wrs_list.txt'
+    aoi_oz = 'Australian_Wrs_list_without_113_070.txt'
     oz_set = load_aoi_oz(aoi_oz)
     #print (path_row_list)
     
