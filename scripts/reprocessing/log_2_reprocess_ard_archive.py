@@ -36,6 +36,7 @@ import jsonpickle
 import datacube
 
 log_file = 'reprocess.txt'
+log_file = 'reprocess_all.txt'
 
 ARD_PARENT_PRODUCT_MAPPING = {
     "ga_ls5t_level1_3": "ga_ls5t_ard_3",
@@ -139,6 +140,7 @@ for chopped_scene, l1_ard_path in new_l1.items():
 if True:
     f_uuid = open("old_ards_to_archive.txt", "w")
     f_old_ard_yaml = open("old_ard_yaml.txt", "w")
+    f_l1_new_dataset_path = open("l1_new_dataset_path.txt", "w")
     #f_new_l1 = open("old_ard_yaml.txt", "w")
     for _, scene  in grouped_data.items():
         #print(scene)
@@ -149,6 +151,7 @@ if True:
         path_from_base =  scene['ard_old_dataset_yaml'].relative_to(base)
         f_old_ard_yaml.write(str(path_from_base) + '\n')
         f_uuid.write(str(scene['ard_old_uuid']) + '\n')
+        f_l1_new_dataset_path.write(str(scene['l1_new_dataset_path']) + '\n')
     f_uuid.close()
     f_old_ard_yaml.close()
 
@@ -156,7 +159,7 @@ if True:
 if True:
     # This isn't being used by anything.
     # It's more a record.
-    with open('grouped_data.jsonpickle', 'w') as handle:
+    with open('grouped_data_all.jsonpickle', 'w') as handle:
         # TypeError: Object of type 'PosixPath' is not JSON serializable
         # json.dump(grouped_data, handle)
         json_obj = jsonpickle.encode(grouped_data)
@@ -164,6 +167,6 @@ if True:
         #jsonpickle.dump(grouped_data, handle) 
 
 if True:
-    with open('rejected_2_reprocess.txt', 'w') as f:
+    with open('rejected_2_reprocess_all.txt', 'w') as f:
         for item in other_blocked_l1:
             f.write("%s" % item)
