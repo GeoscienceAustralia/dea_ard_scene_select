@@ -2,17 +2,17 @@
 
 """
 
-Step 1 – duplicate dataset to be archived in staging area
+Step 1 – duplicate ARD dataset to be archived in staging area
 
-1.       Duplicate the [to be] archived dataset in “staging for removal” location”
+1.       Duplicate the [to be] archived ARD dataset in “staging for removal” location
 
-2.       Update location [in ODC] to point to location in “staged for removal location”
+2.       Update location [in ODC] to point to location in “staged for removal location
 
-3.       Wait prerequisite flush period (until queue empties) - 2 hours?
+3.       Wait prerequisite flush period
 
-4.       Trash original
+4.       Trash original [ARD files that are in the old location, not referenced by the ODC anymore]
 
-Step 2 – write new replacement dataset
+Step 2 – write new ARD replacement dataset
 
 1.       Produce new dataset
 2a.       Index new dataset
