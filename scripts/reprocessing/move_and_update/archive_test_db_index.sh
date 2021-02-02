@@ -27,7 +27,8 @@ datacube --config dsg547_dev.conf product add https://raw.githubusercontent.com/
 #datacube --config dsg547_dev.conf dataset add --confirm-ignore-lineage 
 
 
-echo product='usgs_ls8c_level1_1'
+echo product='ga_ls8c_ard_3'
 datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep '^id: '
-# datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep '^id: '
+echo product='usgs_ls8c_level1_1'
+datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep '^id: '
 # You now have a database with 0 level 1 ls8 scene
