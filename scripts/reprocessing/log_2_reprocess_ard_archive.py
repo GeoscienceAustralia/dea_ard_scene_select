@@ -170,3 +170,11 @@ if True:
     with open('rejected_2_reprocess_all.txt', 'w') as f:
         for item in other_blocked_l1:
             f.write("%s" % item)
+
+
+def main():
+    print ('nothing yet')
+
+    
+if __name__ == "__main__":
+    main()

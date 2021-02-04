@@ -15,3 +15,5 @@
 # ./go_step1.sh # steps 1.1 and 1.2
 #3.       Wait prerequisite flush period (until queue empties) - 2 hours?
 #4.       Trash original
+# edit ../delete_from_yaml_list.sh to change the base dirs
+#./go_delete.sh

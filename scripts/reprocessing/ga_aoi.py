@@ -8,6 +8,7 @@ from typing import List, Tuple, Optional
 import csv
 from collections import defaultdict
 import datetime
+import os
 
 def load_aoi_oz(allowed_codes: Path) -> List:
     """ Convert a file of allowed codes to a list of region codes. """
@@ -46,7 +47,7 @@ def load_aoi_usgs2(allowed_codes: Path) -> List:
 
 
 if __name__ == "__main__":    
-    aoi_oz = 'Australian_Wrs_list_without_113_070.txt'
+    aoi_oz = "Australian_Wrs_list_without_113_070.txt"
     oz_set = load_aoi_oz(aoi_oz)
     #print (path_row_list)
     
