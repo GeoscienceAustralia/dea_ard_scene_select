@@ -9,7 +9,7 @@
 is_test=0 # True
 #is_test=1 # False
 if [ $is_test = 0 ] ; then
-    old_base='/g/data/u46/users/dsg547/test_data/c3/'
+    old_base='/g/data/u46/users/dsg547/test_data/c3_reprocess/'
 else
     old_base='/g/data/xu18/ga/'
 fi
