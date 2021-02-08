@@ -2,14 +2,16 @@
 module use /g/data/v10/public/modules/modulefiles
 module load dea
 
-is_test=0 # True
-#is_test=1 # False
+is_test=0 # True # test one way
+#is_test=1 # False # move it back
 if [ $is_test = 0 ] ; then
-    old_base='/g/data/u46/users/dsg547/test_data/c3/'
-    new_base='/g/data/u46/users/dsg547/test_data/c3_dump_more/' ;
+    old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
+    new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_new/'
 else
-    old_base='/g/data/u46/users/dsg547/test_data/c3/'
-    new_base='/g/data/u46/users/dsg547/test_data/c3_not_prod_yet/' ;
+    old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_new/'
+    new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
+    #old_base='/g/data/u46/users/dsg547/test_data/c3/'
+    #new_base='/g/data/u46/users/dsg547/test_data/c3_not_prod_yet/'
 fi
 
 ard_path="${1%/*}/"
@@ -21,6 +23,9 @@ echo $new_path
 mkdir -p $new_path
 
 rsync -av $old_path $new_path
+
+# StarProb don't need
+# printf $old_path >> delete_original_old_ard.txt
 
 echo product='ga_ls8c_ard_3'
 datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep -E -- '^id: |file:'

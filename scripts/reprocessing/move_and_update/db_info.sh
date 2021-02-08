@@ -6,4 +6,7 @@ module load parallel
 module load dea/20200617                                                        
 
 echo product='ga_ls8c_ard_3'
-datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep -e '^id: ' -e 'file:'
+datacube  --config dsg547_dev.conf dataset search product='ga_ls8c_ard_3' | grep -e '^id: ' -e 'file:' -e 'status:'
+
+echo product='usgs_ls8c_level1_1'
+datacube  --config dsg547_dev.conf dataset search product='usgs_ls8c_level1_1' | grep -e '^id: ' -e 'file:'

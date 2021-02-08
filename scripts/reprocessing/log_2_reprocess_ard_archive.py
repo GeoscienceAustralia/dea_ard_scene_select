@@ -106,7 +106,7 @@ def write_dic(the_data, the_file):
     with open(the_file, 'w') as handle:
         # TypeError: Object of type 'PosixPath' is not JSON serializable
         # json.dump(grouped_data, handle)
-        json_obj = jsonpickle.encode(the_data)
+        json_obj = jsonpickle.encode(the_data, indent=4)
         handle.write(json_obj)
 
         

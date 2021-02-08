@@ -12,14 +12,15 @@ datacube --config dsg547_dev.conf metadata add https://raw.githubusercontent.com
 datacube --config dsg547_dev.conf product add https://raw.githubusercontent.com/GeoscienceAustralia/digitalearthau/develop/digitalearthau/config/eo3/products/l1_ls8.odc-product.yaml
 datacube --config dsg547_dev.conf product add https://raw.githubusercontent.com/GeoscienceAustralia/digitalearthau/develop/digitalearthau/config/eo3/products/ard_ls8.odc-product.yaml
 
-# The old L1 scene.
-# 760315b3-e147-5db2-bb7f-0e52efd4453d
-#datacube --config dsg547_dev.conf dataset add --confirm-ignore-lineage /g/data/u46/users/dsg547/test_data/c3/LC81150802019349/LC08_L1TP_115080_20191215_20191226_01_T1.tar
+# Add the new l1 scenes.
+# Based on short_l1_new_dataset_path.txt
+datacube --config dsg547_dev.conf dataset add --confirm-ignore-lineage /g/data/u46/users/dsg547/test_data/c3/reprocessing/LC81010822019347/LC08_L1TP_101082_20191213_20201023_01_T1.odc-metadata.yaml
+datacube --config dsg547_dev.conf dataset add --confirm-ignore-lineage /g/data/u46/users/dsg547/test_data/c3/reprocessing/LC81010802019347/LC08_L1TP_101080_20191213_20201023_01_T1.odc-metadata.yaml
+datacube --config dsg547_dev.conf dataset add --confirm-ignore-lineage /g/data/u46/users/dsg547/test_data/c3/reprocessing/LC81010772019347/LC08_L1TP_101077_20191213_20201023_01_T1.odc-metadata.yaml
 
-# Add the ARD of the old L1 scene
-# id: fa083e38-a753-4a30-82f7-9deb27ee1602
-# lineage:  level1:  - 760315b3-e147-5db2-bb7f-0e52efd4453d
-#datacube --config dsg547_dev.conf dataset add /g/data/u46/users/dsg547/test_data/c3/ga_ls8c_ard_3/115/080/2019/12/15/ga_ls8c_ard_3-1-0_115080_2019-12-15_final.odc-metadata.yaml
+# Add the old ARD of the old L1 scene
+# This part has a script
+./go_adding.sh
 
 # Archive the old L1 scene
 #datacube --config dsg547_dev.conf dataset archive 760315b3-e147-5db2-bb7f-0e52efd4453d
