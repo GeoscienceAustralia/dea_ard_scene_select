@@ -21,12 +21,13 @@ Step 2 – write new ARD replacement dataset
 3.       Trash staged for removal copy.
 
 Requirements
-1.1 A list of all the old ARD directories to move to the new location, relative to the base dir. - produced by this code.
-1.2 The base dir of the old location and the new location. 
+1.1 A list of all the old ARD directories to move to the new location, relative to the base dir.
+   - produced by this code.
+1.2 The base dir of the old location and the new location.
 1.4 No new requirements.
 
 Do these steps by calling ard interface directly
-2.1 needs a list of reprocessed ls8 l1 tars to ard process  
+2.1 needs a list of reprocessed ls8 l1 tars to ard process
 2.2b Needs a list of old ard uuid's to archive
 """
 import pathlib
@@ -63,7 +64,7 @@ def chopped_scene_id(scene_id: str) -> str:
 
 
 def calc_processed_ard_scene_ids(dc, product):
-    """Return None or a dictionary where key ischopped_scene_id, 
+    """Return None or a dictionary where key ischopped_scene_id,
     value is uri and id in a dictionary.
 """
 
@@ -144,7 +145,7 @@ def generate_new_l1s(log_file, in_area_file):
 
 def build_l1_info(dc, new_l1, processed_ard_scene_ids, product):
     """
-    Build a dict with all the info of new l1 old ARD pairs.  
+    Build a dict with all the info of new l1 old ARD pairs.
     l1_new_dataset_path - R2.1 Needed for the list of tars to ARD process
     "ard_old_dataset_yaml - used for moving out of the way
     ard_old_uuid - R2.2b updating and archiving
@@ -157,16 +158,12 @@ def build_l1_info(dc, new_l1, processed_ard_scene_ids, product):
             a_dataset_list = list(dc.index.datasets.search(id=ard_old_uuid, product=product))
             assert len(a_dataset_list) == 1
             a_dataset = a_dataset_list[0]
-            # file_path = (dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix())
             grouped_data[chopped_scene] = {
                 "l1_new_dataset_path": l1_ard_path,
                 "ard_old_dataset_yaml": a_dataset.local_path,
                 "ard_old_uuid": str(ard_old_uuid),
             }
     return grouped_data
-
-
-#### END OF FUNCTIONS ####
 
 
 def main():

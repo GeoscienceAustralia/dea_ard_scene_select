@@ -41,7 +41,7 @@ def chopped_scene_id(scene_id: str) -> str:
 
 
 def calc_processed_ard_scene_ids(dc, product):
-    """Return None or a dictionary where key ischopped_scene_id, 
+    """Return None or a dictionary where key ischopped_scene_id,
     value is uri and id in a dictionary.
 """
 
