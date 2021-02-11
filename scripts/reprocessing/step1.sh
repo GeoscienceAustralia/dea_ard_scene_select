@@ -9,7 +9,7 @@ if [ $is_test = 0 ] ; then
     new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_new/'
 else
     old_base='/g/data/xu18/ga/'
-    new_base='/g/data/xu18/ga/reprocessing_staged_for_removal'
+    new_base='/g/data/xu18/ga/reprocessing_staged_for_removal/'
 fi
 
 ard_path="${1%/*}/"
