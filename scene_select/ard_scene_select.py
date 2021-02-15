@@ -420,7 +420,7 @@ def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
     # Estimate the number of nodes needed
     if ard_click_params["nodes"] is None:
         if ard_click_params["walltime"] is None:
-            walltime = "05:00:00"
+            walltime = "10:00:00"
         else:
             walltime = ard_click_params["walltime"]
         if ard_click_params["workers"] is None:
@@ -430,7 +430,7 @@ def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
         ard_click_params["nodes"] = _calc_nodes_req(count_all_scenes_list, walltime, workers)
 
 
-def _calc_nodes_req(granule_count, walltime, workers, hours_per_granule=1.5):
+def _calc_nodes_req(granule_count, walltime, workers, hours_per_granule=7.5):
     """ Provides estimation of the number of nodes required to process granule count
 
     >>> _calc_nodes_req(400, '20:59', 28)
