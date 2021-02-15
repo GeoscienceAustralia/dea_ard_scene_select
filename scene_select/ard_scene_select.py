@@ -418,6 +418,7 @@ def l1_scenes_to_process(
 
 def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
     # Estimate the number of nodes needed
+    hours_per_granule=7.5
     if ard_click_params["nodes"] is None:
         if ard_click_params["walltime"] is None:
             walltime = "10:00:00"
@@ -427,7 +428,11 @@ def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
             workers = 30
         else:
             workers = ard_click_params["workers"]
-        ard_click_params["nodes"] = _calc_nodes_req(count_all_scenes_list, walltime, workers)
+        ard_click_params["nodes"] = _calc_nodes_req(count_all_scenes_list, walltime, workers, hours_per_granule)
+    hours, _, _ = [int(x) for x in walltime.split(":")]
+        
+    if hours <= hours_per_granule:
+        raise ValueError("wall time <= hours per granule")
 
 
 def _calc_nodes_req(granule_count, walltime, workers, hours_per_granule=7.5):
@@ -663,7 +668,11 @@ def scene_select(
                 pass
             l1_count = i + 1
 
-    _calc_node_with_defaults(ard_click_params, l1_count)
+    try:
+        _calc_node_with_defaults(ard_click_params, l1_count)
+    except ValueError as err:
+        print(err.args)
+        LOGGER.warning('ValueError', message=err.args)
 
     # write pbs script
     if len(uuids2archive) > 0:
