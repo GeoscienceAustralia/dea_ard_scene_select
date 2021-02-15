@@ -23,9 +23,7 @@ import datacube
     default=None,
 )
 @click.option(
-    "--uuidfile",
-    type=click.Path(dir_okay=False, file_okay=True),
-    help="he uuids of scenes to be moved",
+    "--uuidfile", type=click.Path(dir_okay=False, file_okay=True), help="he uuids of scenes to be moved",
 )
 @click.option(
     "--stagingdir",
@@ -44,10 +42,14 @@ def connect(
 ):
     dc = datacube.Datacube(app="gen-list", config=config)
 
-    old_uri = "file:///g/data/u46/users/dsg547/test_data/c3/LC81150802019349/" \
+    old_uri = (
+        "file:///g/data/u46/users/dsg547/test_data/c3/LC81150802019349/"
         "LC08_L1TP_115080_20191215_20201023_01_T1.odc-metadata.yaml"
-    new_uri = "file:///g/data/u46/users/dsg547/test_data/c3_dump/LC81150802019349/" \
+    )
+    new_uri = (
+        "file:///g/data/u46/users/dsg547/test_data/c3_dump/LC81150802019349/"
         "LC08_L1TP_115080_20191215_20201023_01_T1.odc-metadata.yaml"
+    )
     dataset_gen = dc.index.datasets.get_datasets_for_location(uri=old_uri)
     # with open(log_file) as f:
     #   for line in f:

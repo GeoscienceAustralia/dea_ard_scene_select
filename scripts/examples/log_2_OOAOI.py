@@ -8,8 +8,10 @@ import json
 
 import datacube
 
-log_file = "/g/data1a/u46/users/dsg547/sandpit/dea-ard-scene-select/scripts/" \
+log_file = (
+    "/g/data1a/u46/users/dsg547/sandpit/dea-ard-scene-select/scripts/"
     "examples/scratch/filter-jobid-e515b2/ard_scene_select.log"
+)
 
 
 uuids = []
