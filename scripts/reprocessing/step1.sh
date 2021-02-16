@@ -2,11 +2,15 @@
 module use /g/data/v10/public/modules/modulefiles
 module load dea
 
-is_test=0 # True # test
-#is_test=1 # False # production
+#is_test=0 # True # test
+is_test=1 # False # production
 if [ $is_test = 0 ] ; then
     old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
     new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_new/'
+
+    # setting up the testing env
+    #old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_raw/'
+    #new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
 else
     old_base='/g/data/xu18/ga/'
     new_base='/g/data/xu18/ga/reprocessing_staged_for_removal/'
@@ -21,7 +25,8 @@ echo $new_path
 mkdir -p $new_path
 
 a_cmd="rsync"
-if [ $a_cmd = 0 ] ; then
+#a_cmd="update"
+if [ $a_cmd = "rsync" ] ; then
     rsync -av $old_path $new_path
 else
     newyaml="$new_base$1"
