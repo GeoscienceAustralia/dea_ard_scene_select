@@ -5,6 +5,7 @@ module load dea
 #is_test=0 # True # test
 is_test=1 # False # production
 if [ $is_test = 0 ] ; then
+    config=" --config dsg547_dev.conf "
     old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
     new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_new/'
 
@@ -12,6 +13,7 @@ if [ $is_test = 0 ] ; then
     #old_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_raw/'
     #new_base='/g/data/u46/users/dsg547/test_data/c3/reprocessing/ard_standard/'
 else
+    config=" "
     old_base='/g/data/xu18/ga/'
     new_base='/g/data/xu18/ga/reprocessing_staged_for_removal/'
 fi
@@ -31,5 +33,5 @@ if [ $a_cmd = "rsync" ] ; then
 else
     newyaml="$new_base$1"
     echo $newyaml
-    datacube --config dsg547_dev.conf dataset update $newyaml  --location-policy forget #  --dry-run
+    datacube $config dataset update $newyaml  --location-policy forget #  --dry-run
 fi
