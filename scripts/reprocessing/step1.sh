@@ -27,7 +27,7 @@ mkdir -p $new_path
 a_cmd="rsync"
 #a_cmd="update"
 if [ $a_cmd = "rsync" ] ; then
-    rsync -av $old_path $new_path
+    sg xu18 -c "rsync -av $old_path $new_path"
 else
     newyaml="$new_base$1"
     echo $newyaml
