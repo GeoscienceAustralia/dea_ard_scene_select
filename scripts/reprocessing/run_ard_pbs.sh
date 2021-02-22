@@ -20,10 +20,8 @@ if [ $is_test = 0 ] ; then
     #test=' --test '
     
 else
-    level1_list=$DIR'/prod_2_scenes_l1_new_dataset_path.txt'
-    archive_list=$DIR'/prod_2_scenes_old_ards_to_archive.txt'
-    #level1_list=$DIR'/l1_new_dataset_path.txt'
-    #archive_list=$DIR'/old_ards_to_archive.txt'
+    level1_list=$DIR'/l1_new_dataset_path.txt'
+    archive_list=$DIR'/old_ards_to_archive.txt'
     base_dir='/g/data/v10/work/c3_ard'
     pkgdir='/g/data/xu18/ga'
     project='v10'
