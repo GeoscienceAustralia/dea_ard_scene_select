@@ -30,4 +30,4 @@ else
 fi
 
 
-ard_pbs --level1-list $level1_list --workdir $base_dir/workdir --pkgdir $pkgdir  --env $DIR'/wagl.env' --project $project --walltime 07:30:00 --index-datacube-env $index_datacube_env --logdir $base_dir/logdir --archive-list $archive_list $test
+ard_pbs --level1-list $level1_list --workdir $base_dir/workdir --pkgdir $pkgdir  --env $DIR'/wagl.env' --project $project --walltime 02:30:00 --index-datacube-env $index_datacube_env --logdir $base_dir/logdir --archive-list $archive_list $test
