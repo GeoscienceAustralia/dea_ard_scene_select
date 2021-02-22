@@ -19,5 +19,5 @@ ard_path="${1%/*}/"
 old_path="$old_base$ard_path"
 echo $old_path
 
-#rm -r $old_path
+rm -r $old_path
 
