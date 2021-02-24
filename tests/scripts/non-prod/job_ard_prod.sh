@@ -16,7 +16,7 @@ module use /g/data/v10/private/modules/modulefiles
 #module use /home/547/dsg547/devmodules/modulefiles
 
 #module load ard-scene-select-py3-dea/20201126
-module load ard-scene-select-py3-dea/20210215
+module load ard-scene-select-py3-dea/20210216
 
 [[ ":$PYTHONPATH:" != *":$SSPATH:"* ]] && PYTHONPATH="$SSPATH:${PYTHONPATH}"
 
