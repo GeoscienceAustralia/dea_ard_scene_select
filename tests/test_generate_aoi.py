@@ -14,6 +14,7 @@ STANDARD_SCENES_SELECTED = TEST_DATA_DIR.joinpath("standard_scenes_to_ARD_proces
 L1EXAMPLES = TEST_DATA_DIR.joinpath("All_Landsat_Level1_Nci_Files.txt")
 # The Worldwide Reference System (WRS) is a global notation system for Landsat data.
 STANDARD_WRS_AOI = TEST_DATA_DIR.joinpath("standard_wrs_list.txt")
+STANDARD_MGRS_AOI = TEST_DATA_DIR.joinpath("australian_mgrs_aoi.txt")
 # actually, we done have the results file yet...
 
 
@@ -27,8 +28,24 @@ def test_generate_aoi_main():
     # Note this is just comparing the results from the past to when you ran the test
     # Good for stopping new errors coming in
     # Will not pick up anything bad before then
-    # Plus this does not cover the ODC code.
     assert standard == results
 
-    # ... do stuff with dirpath
+    # remove the dirpath
+    shutil.rmtree(dirpath)
+
+    
+def test_generate_mgrs_aoi():
+
+    dirpath = tempfile.mkdtemp()
+    _, allowed_codes = generate_region.callback(satellite_data_provider="ESA", workdir=dirpath)
+    standard = set(line.strip() for line in open(STANDARD_MGRS_AOI))
+    results = set(allowed_codes)
+
+    # Note this is just comparing the results from the past to when you ran the test
+    # Good for stopping new errors coming in
+    # Will not pick up anything bad before then
+    assert standard == results
+    print (dirpath)
+
+    # delete dirpath
     shutil.rmtree(dirpath)
