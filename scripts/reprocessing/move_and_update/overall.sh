@@ -10,7 +10,7 @@
 # Main files produced;
 # For step 2.2b -Archive the staged for deletion original dataset. 
 #     uuid_file = "old_ards_to_archive.txt"
-# For step1.1/1.2 - cp and update the scenes to be archived. 
+# For step1.1/1.2/1.4 - cp and update the scenes to be archived. 
 #    old_ard_yaml_file = "old_ard_yaml.txt"
 # input for the new ARD
 #    l1_new_dataset_file = "l1_new_dataset_path.txt"
