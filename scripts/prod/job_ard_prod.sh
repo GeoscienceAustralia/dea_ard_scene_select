@@ -14,6 +14,6 @@
 module use /g/data/v10/public/modules/modulefiles
 module use /g/data/v10/private/modules/modulefiles
 
-module load ard-scene-select-py3-dea/20201126
+module load ard-scene-select-py3-dea/20210216
 
-ard-scene-select --workdir /g/data/v10/work/c3_ard/workdir --pkgdir /g/data/xu18/ga --logdir /g/data/v10/work/c3_ard/logdir --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env --index-datacube-env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/index-datacube.env  --project v10 --walltime 02:30:00 #--run-ard
+ard-scene-select --workdir /g/data/v10/work/c3_ard/workdir --pkgdir /g/data/xu18/ga --logdir /g/data/v10/work/c3_ard/logdir --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env --index-datacube-env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/index-datacube.env  --project v10 --walltime 10:00:00 #--run-ard
