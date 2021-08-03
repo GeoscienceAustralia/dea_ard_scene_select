@@ -1,10 +1,17 @@
 #! /usr/bin/env python3
 
 import tempfile
-import shutil
 from pathlib import Path
+import datetime
+import pytz
 
-from scene_select.ard_scene_select import dict2ard_arg_string, allowed_codes_to_region_codes
+from scene_select.ard_scene_select import (
+    dict2ard_arg_string,
+    allowed_codes_to_region_codes,
+    exclude_days,
+    _calc_nodes_req,
+    _calc_node_with_defaults,
+)
 
 
 def test_dict2ard_arg_string():
@@ -21,3 +28,80 @@ def test_allowed_codes_to_region_codes():
     the_file_path = str(file_path)
     path_row_list = allowed_codes_to_region_codes(the_file_path)
     assert path_row_list == ["102067", "102068"]
+
+
+def test_exclude_days():
+    range1 = ["2020-08-09:2020-08-30", "2020-09-02:2020-09-05"]
+
+    # not excluded
+    a_dt = datetime.datetime(1944, 6, 4, tzinfo=pytz.UTC)
+    assert not exclude_days(range1, a_dt)
+    a_dt = datetime.datetime(2020, 9, 1, tzinfo=pytz.UTC)
+    assert not exclude_days(range1, a_dt)
+    a_dt = datetime.datetime(2020, 9, 6, tzinfo=pytz.UTC)
+    assert not exclude_days(range1, a_dt)
+    a_dt = datetime.datetime(2020, 8, 8, hour=23, minute=59, second=59, microsecond=999999, tzinfo=pytz.UTC)
+    assert not exclude_days(range1, a_dt)
+
+    # excluded
+    a_dt = datetime.datetime(2020, 8, 30, hour=23, minute=59, second=59, microsecond=999999, tzinfo=pytz.UTC)
+    assert exclude_days(range1, a_dt)
+    a_dt = datetime.datetime(2020, 8, 9, tzinfo=pytz.UTC)
+    assert exclude_days(range1, a_dt)
+
+    range2 = ["2020-08-09:2020-08-09"]
+    # excluded
+    a_dt = datetime.datetime(2020, 8, 9, hour=23, minute=59, second=59, microsecond=999999, tzinfo=pytz.UTC)
+    assert exclude_days(range1, a_dt)
+    a_dt = datetime.datetime(2020, 8, 9, tzinfo=pytz.UTC)
+    assert exclude_days(range1, a_dt)
+
+
+def test_exclude_days_diff_tzinfo():
+    range1 = ["2020-08-09:2020-08-30", "2020-09-02:2020-09-05"]
+
+    # not excluded
+    a_dt = datetime.datetime(1944, 6, 4, tzinfo=datetime.timezone.utc)
+    assert not exclude_days(range1, a_dt)
+
+
+def test_exclude_days_empty():
+    range1 = []
+
+    # not excluded
+    a_dt = datetime.datetime(1944, 6, 4, tzinfo=datetime.timezone.utc)
+    assert not exclude_days(range1, a_dt)
+
+
+def test_calc_nodes_req():
+    granule_count = 400
+    walltime = "20:59:00"
+    workers = 28
+    hours_per_granule = 1.5
+    results = _calc_nodes_req(granule_count, walltime, workers, hours_per_granule)
+    assert results == 2
+
+    granule_count = 800
+    walltime = "20:00:00"
+    workers = 28
+    hours_per_granule = 1.5
+    results = _calc_nodes_req(granule_count, walltime, workers, hours_per_granule)
+    assert results == 3
+
+    granule_count = 1
+    walltime = "01:00:00"
+    workers = 1
+    hours_per_granule = 7
+    results = _calc_nodes_req(granule_count, walltime, workers, hours_per_granule)
+    print(results)
+    assert results == 7
+
+
+def test_calc_nodes_req():
+    ard_click_params = {"walltime": "1:00:00", "nodes": None, "workers": None}
+    count_all_scenes_list = 1
+
+    try:
+        _calc_node_with_defaults(ard_click_params, count_all_scenes_list)
+    except ValueError as err:
+        assert len(err.args) >= 1

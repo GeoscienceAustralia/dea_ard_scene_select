@@ -13,7 +13,13 @@ import click
 from logging.config import fileConfig
 
 import pytz
+
 import pprint
+import sys
+import time
+import timeit
+
+#dc = None
 
 try:
     import datacube
@@ -155,16 +161,28 @@ def allowed_codes_to_region_codes(allowed_codes: Path) -> List:
 
 def dataset_with_child(dc, dataset):
     """
-    If any child exists that isn't archived, with a dataset_maturity of 'final'
+    If any child exists that isn't archived
+    :param dc:
+    :param dataset:
+    :return:
+    """
+    return any(not child_dataset.is_archived for child_dataset in dc.index.datasets.get_derived(dataset.id))
+
+
+def dataset_with_child_dev(dc, dataset):
+    """
+    If any child exists that isn't archived
     :param dc:
     :param dataset:
     :return:
     """
     ds_w_child = []
     for child_dataset in dc.index.datasets.get_derived(dataset.id):
-        if not child_dataset.is_archived and child_dataset.metadata.dataset_maturity == "final":
+        if not child_dataset.is_archived:  # and not dataset.dataset_maturity:
             ds_w_child.append(child_dataset)
-    return any(ds_w_child)
+    print("***** ds_w_child *******")
+    print(ds_w_child)
+    return any(not child_dataset.is_archived for child_dataset in dc.index.datasets.get_derived(dataset.id))
 
 
 def chopped_scene_id(scene_id: str) -> str:
@@ -179,17 +197,173 @@ def chopped_scene_id(scene_id: str) -> str:
     capture_id = scene_id[:-5]
     return capture_id
 
+def search_returning_landsat_product_id():
+    for result in dc_global.index.datasets.search_returning(
+            ("landsat_product_id",),
+            product='usgs_ls8c_level1_1'
+        ):
+        print (result.landsat_product_id)
+
+def search_landsat_product_id():
+    for result in dc_global.index.datasets.search(
+            product='usgs_ls8c_level1_1'
+        ):
+        #print (result.metadata_doc)
+        #print (result.metadata_doc["properties"])
+        print (result.metadata_doc["properties"]["landsat:landsat_product_id"])
+        #break
+
+
+
+def search_summaries_landsat_product_id():
+    for result in dc_global.index.datasets.search_summaries(
+            product='usgs_ls8c_level1_1'
+        ):
+        #print (result.metadata_doc)
+        #print (result.metadata_doc["properties"])
+        print (result["metadata_doc"]["properties"]["landsat:landsat_product_id"])
+        
 
 def calc_processed_ard_scene_ids(dc, product):
     """Return None or a dictionary with key chopped_scene_id and value  maturity level.
 """
+    global dc_global
+    dc_global = dc
+
+    if False and product in ARD_PARENT_PRODUCT_MAPPING:
+        for prod in [product, ARD_PARENT_PRODUCT_MAPPING[product]]:
+            #prod = product
+            print("**********     get_field_names   {} ************".format(prod))
+            field_names = dc.index.datasets.get_field_names(product_name=prod)
+            print(field_names)
+            for a_name in ['local_path', 'landsat_product_id', 'region_code',
+                       'id', 'time', ]:
+                if a_name in field_names:
+                    print ("{} is in".format(a_name))
+                else:
+                    print ("{} OUT!!!".format(a_name))
+    if False:
+        t0 = time.time()
+        for result in dc.index.datasets.search_returning(
+                ("landsat_product_id",),
+                product='usgs_ls8c_level1_1'
+        ):
+            print (result["landsat_product_id"])
+        t1 = time.time()
+        
+        total = t1-t0
+        print ("total")
+        print (total)
+    print ('timeit start')
+    atime_search_returning_landsat_product_id = None
+    atime_search_summaries_landsat_product_id = None
+    atime_search_landsat_product_id = None
+    #print (timeit.timeit(search_returning_landsat_product_id, number=20))
+    atime_search_returning_landsat_product_id = min(timeit.Timer(search_returning_landsat_product_id).repeat(repeat=10, number=1))
+    atime_search_summaries_landsat_product_id = min(timeit.Timer(search_summaries_landsat_product_id).repeat(repeat=10, number=1))
+    atime_search_landsat_product_id = min(timeit.Timer(search_landsat_product_id).repeat(repeat=10, number=1))
+    print ('atime_search_returning_landsat_product_id')
+    print (atime_search_returning_landsat_product_id)
+    print ('atime_search_landsat_product_id')
+    print (atime_search_landsat_product_id)
+    print ('atime_search_summaries_landsat_product_id')
+    print (atime_search_summaries_landsat_product_id)
+    print ('timeit end')
+    sys.exit(0)
+
+    """
+atime_search_returning_landsat_product_id
+3.427654878993053
+atime_search_landsat_product_id
+18.267368010012433
+
+    t0 = time.time()
+    code_block
+    t1 = time.time()
+    
+    total = t1-t0
+    """
+    datasets = list(dc.index.datasets.search(product=product))
+    print (datasets[0].local_path)
+    print (datasets[0].metadata_doc)
+    #print (datasets[0].metadata_doc['uri'])
+
+    sys.exit(0)
+    #    file_path = (
+    #        dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix(
 
     if product in ARD_PARENT_PRODUCT_MAPPING:
+        print("**********    SUMMARIES    ************")
+        summy = dc.index.datasets.search_summaries(product=ARD_PARENT_PRODUCT_MAPPING[product])
+
+        # pprint.pprint (list(summy)) # good
+        for result in summy:
+            # pprint.pprint (result)
+            pprint.pprint(result["id"])
+            pprint.pprint(result["landsat_scene_id"])  # landsat_scene_id
+            pprint.pprint(result["dataset_maturity"])
+            pprint.pprint(result["metadata_doc"]["properties"]["landsat:landsat_product_id"])
+        sys.exit(0)
+        for result in dc.index.datasets.search_eager(product=ARD_PARENT_PRODUCT_MAPPING[product]):
+            print("**********list(result) ")
+            print(result)
+            # print (list(result)) # not iterable
+            print("********* metadata_doc  ")
+            print(result.metadata_doc)
+            # print (result['metadata_doc']) # TypeError: 'Dataset' object is not subscriptable
+            # print (list(result.metadata_doc))
+            print("********* metadata_doc ['lineage']['source_datasets'] ")
+            # print (list(result.metadata_doc['accessories'])) # no attribute
+            print(list(result.metadata_doc["lineage"]["source_datasets"]))
+            print("**********landsat:landsat_product_id   ) ")
+            print(result.metadata_doc["properties"]["landsat:landsat_product_id"])
+            # print (list(result.metadata_doc.lineage.source_datasets))
+            print(result.metadata)  # <datacube.utils.documents.DocReader object at 0x7f61d29eaa90>
+            # print (result.metadata.fields) # the mother load. Excellent data
+            # But no lineage
+            # print (result.fields) # nope
+            # print (result.source_datasets) # nope
+            # print (result.lineage) nope
+            # print (result.lineage) nope
+        # for result in dc.index.datasets.search_returning(("landsat_scene_id", "dataset_maturity", "id"), product=ARD_PARENT_PRODUCT_MAPPING[product]
+
         processed_ard_scene_ids = {}
         for result in dc.index.datasets.search_returning(
             ("landsat_scene_id", "dataset_maturity", "id"), product=ARD_PARENT_PRODUCT_MAPPING[product]
         ):
+            # bad fields
+            #  "properties"
+            # "landsat"
+            # print ("result.stuff")
+            # print (result.metadata)
+            # ("landsat_scene_id", "dataset_maturity", "id"),
             choppped_id = chopped_scene_id(result.landsat_scene_id)
+            if choppped_id in processed_ard_scene_ids:
+                # The same chopped scene id has multiple scenes
+                old_uuid = processed_ard_scene_ids[choppped_id]["id"]
+                LOGGER.warning(MANYSCENES, SCENEID=result.landsat_scene_id, old_uuid=old_uuid, new_uuid=result.id)
+
+            processed_ard_scene_ids[chopped_scene_id(result.landsat_scene_id)] = {
+                "dataset_maturity": result.dataset_maturity,
+                "id": result.id,
+            }
+        for result in dc.index.datasets.search_summaries(product=ARD_PARENT_PRODUCT_MAPPING[product]):
+            print("pprint (list(result.metadata_doc))")
+            pprint.pprint(list(result.metadata_doc))
+            pprint.pprint(result.metadata_doc)
+
+            # bad fields
+            #  "properties"
+            # "landsat"
+            # print ("result.stuff")
+            # print (result.metadata)
+            # ("landsat_scene_id", "dataset_maturity", "id"),
+            #
+            print(list(result.metadata_doc["lineage"]["source_datasets"]))
+            print("**********landsat:landsat_product_id   ) ")
+            print(result.metadata_doc["properties"]["landsat:landsat_product_id"])
+            # pprint (list(result))
+            choppped_id = chopped_scene_id(result.metadata_doc.landsat_scene_id)
             if choppped_id in processed_ard_scene_ids:
                 # The same chopped scene id has multiple scenes
                 old_uuid = processed_ard_scene_ids[choppped_id]["id"]
@@ -230,32 +404,21 @@ def exclude_days(days_to_exclude: List, checkdatetime):
 
 
 def l1_filter(
-    dc,
-    product,
-    brdfdir: Path,
-    wvdir: Path,
-    region_codes: List,
-    interim_days_wait: int,
-    days_to_exclude: List,
-    find_blocked: bool,
+    dc, product, brdfdir: Path, wvdir: Path, region_codes: List, interim_days_wait: int, days_to_exclude: List,
 ):
     """return a list of file paths to ARD process """
     # pylint: disable=R0914
     # R0914: Too many local variables
 
-    LOGGER.debug("location:pre-calc_processed_ard_scene_ids")
     processed_ard_scene_ids = calc_processed_ard_scene_ids(dc, product)
-    LOGGER.debug("location:pre-AncillaryFiles")
     ancillary_ob = AncillaryFiles(brdf_dir=brdfdir, water_vapour_dir=wvdir)
-    LOGGER.debug("location:post-AncillaryFiles")
     files2process = []
     uuids2archive = []
     for dataset in dc.index.datasets.search(product=product):
-        LOGGER.debug("location:start dataset main loop")
         file_path = (
             dataset.local_path.parent.joinpath(dataset.metadata.landsat_product_id).with_suffix(".tar").as_posix()
-        )        
-        LOGGER.debug("location:post file_path")
+        )
+
         # Filter out if the processing level is too low
         if not re.match(PROCESSING_PATTERN_MAPPING[product], dataset.metadata.landsat_product_id):
 
@@ -268,8 +431,7 @@ def l1_filter(
             kwargs = {
                 SCENEID: dataset.metadata.landsat_scene_id,
                 REASON: "Region not in AOI",
-                "region_code": ("%s" % dataset.metadata.region_code),
-                "uuid": dataset.id,
+                MSG: ("Path row %s" % dataset.metadata.region_code),
             }
             LOGGER.debug(SCENEREMOVED, **kwargs)
             continue
@@ -290,25 +452,26 @@ def l1_filter(
         ancill_there, msg = ancillary_ob.definitive_ancillary_files(dataset.time.end)
         if ancill_there is False:
             days_ago = datetime.datetime.now(dataset.time.end.tzinfo) - datetime.timedelta(days=interim_days_wait)
+            kwargs = {
+                "days_ago": str(days_ago),
+                "dataset.time.end": str(dataset.time.end),
+                SCENEID: dataset.metadata.landsat_scene_id,
+                MSG: ("ancillary info %s" % msg),
+            }
+            LOGGER.debug("no ancillary", **kwargs)
             if days_ago > dataset.time.end:
                 # If the ancillary files take too long to turn up
                 # process anyway
                 kwargs = {
                     DATASETPATH: file_path,
                     SCENEID: dataset.metadata.landsat_scene_id,
-                    DATASETID: str(dataset.id),
-                    "days_ago": str(days_ago),
-                    "dataset.time.end": str(dataset.time.end),
                 }
-                LOGGER.debug("No ancillary. Processing to interim", **kwargs)
+                LOGGER.debug("Fallback to interim", **kwargs)
             else:
                 kwargs = {
                     DATASETPATH: file_path,
                     SCENEID: dataset.metadata.landsat_scene_id,
-                    DATASETID: str(dataset.id),
                     REASON: "ancillary files not ready",
-                    "days_ago": str(days_ago),
-                    "dataset.time.end": str(dataset.time.end),
                     MSG: ("Not ready: %s" % msg),
                 }
                 LOGGER.info(SCENEREMOVED, **kwargs)
@@ -323,40 +486,36 @@ def l1_filter(
             }
             LOGGER.info(SCENEREMOVED, **kwargs)
             continue
-        # Do the data with child filter here
-        # It will slow things down
-        # But any chopped_scene_id in processed_ard_scene_ids
-        # will now be a blocked reprocessed scene
-        # if find_blocked is True:
-        removed_processed_scenes = False
-        if find_blocked:
-            removed_processed_scenes = True
+
+        if processed_ard_scene_ids:
+            a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
+
+            if a_chopped_scene_id in processed_ard_scene_ids:
+                ard_element = processed_ard_scene_ids[a_chopped_scene_id]
+                print("*********** ard_element")
+                print(ard_element)
+                if False:  # dataset.metadata.landsat_product_id == ard_element[landsat_product_id]:
+                    kwargs = {
+                        DATASETPATH: file_path,
+                        REASON: "Re-processed scene.  Manually remove old scenes.",
+                        SCENEID: dataset.metadata.landsat_scene_id,
+                    }
+
+                kwargs = {
+                    DATASETPATH: file_path,
+                    REASON: "The scene has been ARD processed",
+                    SCENEID: dataset.metadata.landsat_scene_id,
+                }
+                LOGGER.debug(SCENEREMOVED, **kwargs)
+                produced_ard = processed_ard_scene_ids[a_chopped_scene_id]
+            # FixME remove
             if dataset_with_child(dc, dataset):
                 kwargs = {
                     DATASETPATH: file_path,
-                    REASON: "Skipping dataset with children",
+                    REASON: "Skipping dataset with children deep base remix",
                     SCENEID: dataset.metadata.landsat_scene_id,
                 }
                 LOGGER.debug(SCENEREMOVED, **kwargs)
-                continue
-        
-        LOGGER.debug("location:post find blocked")
-        if processed_ard_scene_ids:
-            a_chopped_scene_id = chopped_scene_id(dataset.metadata.landsat_scene_id)
-            if a_chopped_scene_id in processed_ard_scene_ids:
-                kwargs = {
-                    DATASETPATH: file_path,
-                    SCENEID: dataset.metadata.landsat_scene_id,
-                }
-                if removed_processed_scenes:
-                    kwargs[REASON] = "Potential reprocessed scene blocked from ARD processing"
-                    # Could do this, but the info is in the file path
-                    # kwargs['landsat_product_id']
-                else:
-                    kwargs[REASON] = "The scene has been processed"
-
-                LOGGER.debug(SCENEREMOVED, **kwargs)
-                produced_ard = processed_ard_scene_ids[a_chopped_scene_id]
                 if produced_ard["dataset_maturity"] == "interim" and ancill_there is True:
                     # lets build a list of ARD uuid's to delete
                     uuids2archive.append(str(produced_ard["id"]))
@@ -369,7 +528,6 @@ def l1_filter(
 
         # WARNING any filter under here will not be executed when processing interim scenes
 
-        LOGGER.debug("location:pre dataset_with_child" )
         # If any child exists that isn't archived
         if dataset_with_child(dc, dataset):
             kwargs = {
@@ -394,7 +552,6 @@ def l1_scenes_to_process(
     scene_limit: int,
     interim_days_wait: int,
     days_to_exclude: List,
-    find_blocked: bool,
     config: Optional[Path] = None,
 ) -> Tuple[int, List[str]]:
     """Writes all the files returned from datacube for level1 to a text file."""
@@ -410,7 +567,6 @@ def l1_scenes_to_process(
                 region_codes=region_codes,
                 interim_days_wait=interim_days_wait,
                 days_to_exclude=days_to_exclude,
-                find_blocked=find_blocked,
             )
             for fp in files2process:
                 fid.write(fp + "\n")
@@ -424,7 +580,6 @@ def l1_scenes_to_process(
 
 def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
     # Estimate the number of nodes needed
-    hours_per_granule = 7.5
     if ard_click_params["nodes"] is None:
         if ard_click_params["walltime"] is None:
             walltime = "05:00:00"
@@ -434,11 +589,7 @@ def _calc_node_with_defaults(ard_click_params, count_all_scenes_list):
             workers = 30
         else:
             workers = ard_click_params["workers"]
-        ard_click_params["nodes"] = _calc_nodes_req(count_all_scenes_list, walltime, workers, hours_per_granule)
-    hours, _, _ = [int(x) for x in walltime.split(":")]
-
-    if hours <= hours_per_granule:
-        raise ValueError("wall time <= hours per granule")
+        ard_click_params["nodes"] = _calc_nodes_req(count_all_scenes_list, walltime, workers)
 
 
 def _calc_nodes_req(granule_count, walltime, workers, hours_per_granule=1.5):
@@ -587,12 +738,6 @@ def make_ard_pbs(level1_list, **ard_click_params):
 @click.option("--nodes", help="The number of nodes to request.")
 @click.option("--memory", help="The memory in GB to request per node.")
 @click.option("--jobfs", help="The jobfs memory in GB to request per node.")
-@click.option(
-    "--find-blocked",
-    default=False,
-    is_flag=True,
-    help="Find l1 scenes that have no children but are not getting processed..",
-)
 @LogMainFunction()
 def scene_select(
     usgs_level1_files: click.Path,
@@ -608,7 +753,6 @@ def scene_select(
     interim_days_wait: int,
     days_to_exclude: list,
     run_ard: bool,
-    find_blocked: bool,
     **ard_click_params: dict,
 ):
     """
@@ -659,7 +803,6 @@ def scene_select(
             scene_limit=scene_limit,
             interim_days_wait=interim_days_wait,
             days_to_exclude=days_to_exclude,
-            find_blocked=find_blocked,
         )
         # ARCHIVE_FILE
         path_scenes_to_archive = jobdir.joinpath(ARCHIVE_FILE)
@@ -667,18 +810,13 @@ def scene_select(
             for item in uuids2archive:
                 fid.write("%s\n" % item)
     else:
-        uuids2archive = []
         with open(usgs_level1_files) as f:
             i = 0
             for i, l in enumerate(f):
                 pass
             l1_count = i + 1
 
-    try:
-        _calc_node_with_defaults(ard_click_params, l1_count)
-    except ValueError as err:
-        print(err.args)
-        LOGGER.warning("ValueError", message=err.args)
+    _calc_node_with_defaults(ard_click_params, l1_count)
 
     # write pbs script
     if len(uuids2archive) > 0:

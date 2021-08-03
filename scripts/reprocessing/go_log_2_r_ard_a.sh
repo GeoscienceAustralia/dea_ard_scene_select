@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# source this file to set up the wagl module
-
 module use /g/data/v10/public/modules/modulefiles
 module use /g/data/v10/private/modules/modulefiles
-#module load ard-pipeline/20210129
-module load ard-pipeline/20201030
 
+module load dea
 
+./log_2_reprocess_ard_archive.py 

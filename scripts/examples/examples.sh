@@ -1,13 +1,27 @@
 #!/bin/bash
 
+echo If module load breaks check on a clean environment
 module use /g/data/v10/public/modules/modulefiles
 module use /g/data/v10/private/modules/modulefiles
+module use /g/data/u46/users/dsg547/devmodules/modulefiles
 
-module load ard-scene-select-py3-dea/20200909
+module load ard-scene-select-py3-dea/20210216
+
+#module load ard-scene-select-py3-dea/20210722
+
 module load h5-compression-filters/20200612
-module load dea
+
 
 SSPATH=$PWD/../../
+
+<<<<<<< HEAD
+=======
+#PRODUCTS = '["ga_ls5t_level1_3", "ga_ls7e_level1_3", \
+    #     "usgs_ls5t_level1_1", "usgs_ls7e_level1_1", "usgs_ls8c_level1_1"]'
+
+>>>>>>> adding a warning if the walltime is too low
+# You'll need a scratch directory
+# mkdir scratch
 
 # so it uses the dev scene select
 # echo $PYTHONPATH
@@ -19,20 +33,36 @@ SSPATH=$PWD/../../
 
 #  local code local work dir, all products
 # slow
-python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
+
+
+time python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 05:00:00 --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]' --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env
+
+time python3 ../../scene_select/ard_scene_select.py --products '["usgs_ls7e_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 10:00:00  --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env #--find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]' --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env
+
+time python3 ../../scene_select/ard_scene_select.py --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 10:00:00  --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]' --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env
+
+#time python3 ../../scene_select/ard_scene_select.py --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 10:00:00  --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env --find-blocked #--run-ard  # --products '["usgs_ls8c_level1_1"]' --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env
+
+time ard-scene-select --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 10:00:00  --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env  --scene-limit 999999 #--find-blocked
+
+#time python3 ../../scene_select/ard_scene_select.py --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/  --env $PWD/c3-samples-index-datacube.env --project u46 --walltime 7:00:00  --env /g/data/v10/projects/c3_ard/dea-ard-scene-select/scripts/prod/ard_env/prod-wagl.env
+
+
+# --products '["ga_ls5t_level1_3"]'
 
 # This will use the dev ard scene select too..., all products
 # unless the PYTHONPATH line above is commented out
 # slow
-#ard-scene-select --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00
+#time ard-scene-select  --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 02:30:00 --scene-limit 999999   #--days-to-exclude '["2020-08-09:2020-09-03"]'
 
 #  local code local work dir ls5t
 # use ODC, fast for OEC
-#python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
+#time python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --days-to-exclude '["2020-08-09:2020-09-03"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
+#time python3 ../../scene_select/ard_scene_select.py  --products '["ga_ls5t_level1_3"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
 
 #  local code local work dir ls8c
 # use ODC, fast for OEC#
-#python3 ../../scene_select/ard_scene_select.py  --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
+#time python3 ../../scene_select/ard_scene_select.py  --products '["usgs_ls8c_level1_1"]'  --logdir scratch/ #--workdir scratch/  --pkgdir  scratch/ #--env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--stop-logging #--run-ard
 
 #  local code local work dir # 
 #python3 ../../scene_select/ard_scene_select.py  --products '["usgs_ls8c_level1_1"]' --workdir scratch/  --pkgdir  scratch/ --logdir scratch/ --env /g/data/v10/Landsat-Collection-3-ops/OFFICIAL/Collection-3_5.4.1.env --project u46 --walltime 05:00:00 #--run-ard
@@ -47,4 +77,4 @@ python3 ../../scene_select/ard_scene_select.py --workdir scratch/  --pkgdir  scr
 #python3 ard_scene_select.py  --usgs-level1-files small_Landsat_Level1_Nci_Files.txt
 
 # using Australian_Wrs_list.txt
-#python3 ard_scene_select.py  --usgs-level1-files data/All_Landsat_Level1_Nci_Files.txt  --workdir scratch/ --allowed-codes data/Australian_Wrs_list.txt
+#python3 ../../scene_select/ard_scene_select.py  --usgs-level1-files ../../tests/test_data/All_Landsat_Level1_Nci_Files.txt  --workdir scratch/ --allowed-codes ../../tests/test_data/standard_wrs_list.txt  --logdir scratch/
